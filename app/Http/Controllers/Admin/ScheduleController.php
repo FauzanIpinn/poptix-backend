@@ -50,6 +50,8 @@ class ScheduleController extends Controller
     }
 
     public function destroy(Schedule $schedule): RedirectResponse {
+        $this->authorize('delete', $schedule);
+
         $schedule->delete();
 
         return redirect()

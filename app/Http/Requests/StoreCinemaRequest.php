@@ -7,9 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCinemaRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return $this->user()->can('create', \App\Models\Cinema::class); // atau Schedule::class
+    public function authorize(): bool {
+        return $this->user()->can('create', \App\Models\Cinema::class);
     }
 
     public function rules(): array

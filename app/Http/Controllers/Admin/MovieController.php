@@ -46,12 +46,11 @@ class MovieController extends Controller
             ->with('success', 'Film berhasil diperbarui.');
     }
 
-    public function destroy(Movie $movie): RedirectResponse
-    {
-        $this->authorize('delete', $movie);
+    public function destroy(Movie $movie): RedirectResponse {
+    $this->authorize('delete', $movie);
     
         $movie->delete();
-    
+        
         return redirect()
             ->route('admin.movies.index')
             ->with('success', 'Film berhasil dihapus.');

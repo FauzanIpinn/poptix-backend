@@ -4,14 +4,26 @@ use App\Http\Controllers\Admin\CinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MovieController;
 use App\Http\Controllers\Admin\ScheduleController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Redirect;
 
 Route::get('/dashboard', function () {
     return view('dashboard');
+});
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/payment/notification', [PaymentNotificationController::class, 'handle'])->name('payment.notification');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
 });
 
 Route::get('/dashboard', function () {
@@ -43,7 +55,16 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.index');
-    Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel'); // ⬅️ baru
+    Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->name('bookings.checkout');
+});
+
+Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
+    Route::get('/schedules/{schedule}/seats', [BookingController::class, 'availableSeats']);
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+    Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
 });
 
 require __DIR__ . '/auth.php';

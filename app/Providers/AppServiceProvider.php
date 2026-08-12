@@ -3,10 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Cinema;
-use App\Models\User;
 use App\Observers\CinemaObserver;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,11 +22,12 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void {
-        Cinema::observe(CinemaObserver::class);
-    
-        Gate::define('access-admin-panel', function (User $user) {
-            return $user->hasRole('admin');
-        });
-    }
+    public function boot(): void
+{
+    Cinema::observe(CinemaObserver::class);
+
+    RateLimiter::for('login-attempts', function (Request $request) {
+        return Limit::perMinute(5)->by($request->email . $request->ip());
+    });
+}
 }

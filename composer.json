@@ -10,7 +10,9 @@
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "cloudinary/cloudinary_php": "^3.1",
         "laravel/framework": "^12.64",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
+        "midtrans/midtrans-php": "^2.6",
         "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {

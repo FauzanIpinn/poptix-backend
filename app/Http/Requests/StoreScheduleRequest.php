@@ -7,9 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreScheduleRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return $this->user()->can('create', Schedule::class);
+    public function authorize(): bool {
+        return $this->user()->can('create', \App\Models\Schedule::class);
     }
 
     public function rules(): array

@@ -39,7 +39,10 @@ class CinemaController extends Controller
     }
 
     public function destroy(Cinema $cinema): RedirectResponse {
+        $this->authorize('delete', $cinema);
+
         $cinema->delete();
+        
         return redirect()
             ->route('admin.cinemas.index')
             ->with('success', 'Bioskop berhasil dihapus.');

@@ -7,9 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCinemaRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return $this->user()->can('update', $this->route('cinema')); // atau 'schedule'
+    public function authorize(): bool {
+        return $this->user()->can('update', $this->route('cinema'));
     }
 
     public function rules(): array

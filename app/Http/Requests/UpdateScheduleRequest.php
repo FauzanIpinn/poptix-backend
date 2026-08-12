@@ -9,9 +9,8 @@ class UpdateScheduleRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
-        return $this->user()->can('update', $this->route('schedule')); // atau 'schedule'
+    public function authorize(): bool {
+        return $this->user()->can('update', $this->route('schedule'));
     }
 
     public function rules(): array

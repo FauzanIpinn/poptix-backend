@@ -86,7 +86,7 @@ class BookingController extends Controller
     }
 
     public function myBookings(): View {
-        $bookings = Booking::where('user_id', auth()->user()->id)
+        $bookings = Booking::where('user_id', auth()->id())
             ->with(['schedule.movie', 'schedule.cinema'])
             ->latest()
             ->paginate(10);

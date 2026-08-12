@@ -19,12 +19,17 @@ class Booking extends Model
         'total_price',
         'status',
         'expires_at',
+        'snap_token',
+        'payment_type',
+        'midtrans_order_id',
+        'paid_at',
     ];
 
     protected function casts(): array {
         return [
             'total_price' => 'decimal:2',
             'expires_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 

@@ -13,12 +13,18 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <p class="text-sm text-gray-500">Kode Booking</p>
                         <p class="text-xl font-bold">{{ $booking->booking_code }}</p>
                     </div>
-                    <span class="px-3 py-1 rounded text-sm
+                    <span id="booking-status-badge" class="px-3 py-1 rounded text-sm
                         {{ $booking->status === 'paid' ? 'bg-green-100 text-green-700' : '' }}
                         {{ $booking->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
                         {{ $booking->status === 'cancelled' || $booking->status === 'expired' ? 'bg-red-100 text-red-700' : '' }}">
@@ -37,8 +43,16 @@
                         <p class="text-red-600 text-sm">Selesaikan pembayaran sebelum {{ $booking->expires_at->format('H:i') }}</p>
                     @endif
                 </div>
+
                 <div class="mt-6 flex gap-2">
-                    <a href="{{ route('bookings.index') }}" class="text-indigo-600 underline">Lihat Semua Booking Saya</a>                
+                    <a href="{{ route('bookings.index') }}" class="text-indigo-600 underline">Lihat Semua Booking Saya</a>
+
+                    @if ($booking->status === 'pending')
+                        <button id="pay-button" data-booking-id="{{ $booking->id }}" class="px-4 py-2 bg-green-600 text-white rounded">
+                            Bayar Sekarang
+                        </button>
+                    @endif
+
                     @can('cancel', $booking)
                         <form action="{{ route('bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Yakin batalkan booking ini?')">
                             @csrf
@@ -47,7 +61,54 @@
                         </form>
                     @endcan
                 </div>
+
             </div>
         </div>
     </div>
+
+    {{-- Snap.js dari Midtrans --}}
+    <script
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key="{{ config('midtrans.client_key') }}">
+    </script>
+
+    <script>
+        document.getElementById('pay-button')?.addEventListener('click', function () {
+            const bookingId = this.dataset.bookingId;
+            const button = this;
+
+            button.disabled = true;
+            button.innerText = 'Memuat...';
+
+            fetch(`/bookings/${bookingId}/checkout`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    button.disabled = false;
+                    button.innerText = 'Bayar Sekarang';
+
+                    if (data.snap_token) {
+                        window.snap.pay(data.snap_token, {
+                            onSuccess: function () {
+                                window.location.reload();
+                            },
+                            onPending: function () {
+                                window.location.reload();
+                            },
+                            onError: function () {
+                                alert('Terjadi kesalahan saat memproses pembayaran.');
+                            },
+                            onClose: function () {
+                                console.log('Popup pembayaran ditutup tanpa menyelesaikan transaksi.');
+                            }
+                        });
+                    } else {
+                        alert('Gagal memuat halaman pembayaran.');
+                    }
+                });
+        });
+    </script>
 </x-app-layout>
