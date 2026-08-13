@@ -4,27 +4,13 @@ use App\Http\Controllers\Admin\CinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MovieController;
 use App\Http\Controllers\Admin\ScheduleController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\MovieCatalogController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-});
-
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
-Route::post('/payment/notification', [PaymentNotificationController::class, 'handle'])->name('payment.notification');
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
-});
 
 Route::get('/dashboard', function () {
     if (auth()->user()->hasRole('admin')) {
@@ -37,6 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/movies', [MovieCatalogController::class, 'index'])->name('movies.index');
+    Route::get('/movies/{movie}', [MovieCatalogController::class, 'show'])->name('movies.show');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -57,14 +45,6 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.index');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->name('bookings.checkout');
-});
-
-Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
-    Route::get('/schedules/{schedule}/seats', [BookingController::class, 'availableSeats']);
-    Route::post('/bookings', [BookingController::class, 'store']);
-    Route::get('/bookings', [BookingController::class, 'index']);
-    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
-    Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
 });
 
 require __DIR__ . '/auth.php';

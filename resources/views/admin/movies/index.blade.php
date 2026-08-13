@@ -1,71 +1,78 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Kelola Film</h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+@section('header', 'Manajemen Film')
 
-                @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-                @endif
-
-                <a href="{{ route('admin.movies.create') }}" class="inline-block mb-4 px-4 py-2 bg-indigo-600 text-black rounded">
-                    + Tambah Film
-                </a>
-
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="text-left border-b">
-                            <th class="p-2">Poster</th>
-                            <th class="p-2">Judul</th>
-                            <th class="p-2">Genre</th>
-                            <th class="p-2">Status</th>
-                            <th class="p-2">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($movies as $movie)
-                        <tr class="border-b">
-                            <td class="p-2">
-                                @if ($movie->poster)
-                                <img src="{{ $movie->poster }}" alt="{{ $movie->title }}" class="w-16 h-24 object-cover rounded">
-                                @else
-                                <span class="text-gray-400 text-sm">Tidak ada poster</span>
-                                @endif
-                            </td>
-                            <td class="p-2">{{ $movie->title }}</td>
-                            <td class="p-2">{{ $movie->genre }}</td>
-                            <td class="p-2">
-                                <span class="px-2 py-1 text-xs rounded {{ $movie->status === 'now_showing' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
-                                    {{ $movie->status === 'now_showing' ? 'Now Showing' : 'Coming Soon' }}
-                                </span>
-                            </td>
-                            <td class="p-2 space-x-2">
-                                <a href="{{ route('admin.movies.edit', $movie) }}" class="text-blue-600">Edit</a>
-                                <form action="{{ route('admin.movies.destroy', $movie) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus film ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-400">Belum ada data film.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-
-                <div class="mt-4">
-                    {{ $movies->links() }}
-                </div>
-
-            </div>
-        </div>
+@section('content')
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-white">Katalog Film</h2>
+        <p class="text-ticketor-gray text-sm mt-1">Kelola data film yang akan tayang di seluruh bioskop.</p>
     </div>
-</x-app-layout>
+    <a href="{{ route('admin.movies.create') }}" class="bg-ticketor-neon text-black px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Tambah Film
+    </a>
+</div>
+
+<!-- Menampilkan Pesan Sukses -->
+@if(session('success'))
+<div class="mb-6 bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg" role="alert">
+    <span class="block sm:inline">{{ session('success') }}</span>
+</div>
+@endif
+
+<div class="bg-ticketor-card rounded-xl border border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-800/30 text-ticketor-gray border-b border-gray-800">
+                    <th class="py-4 px-6 font-medium">Poster</th>
+                    <th class="py-4 px-6 font-medium">Judul Film</th>
+                    <th class="py-4 px-6 font-medium">Durasi</th>
+                    <th class="py-4 px-6 font-medium">Genre</th>
+                    <th class="py-4 px-6 font-medium text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-white">
+                @forelse($movies as $movie)
+                <tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
+                    <td class="py-4 px-6">
+                        @if($movie->poster)
+                            <img src="{{ asset('storage/' . $movie->poster) }}" alt="{{ $movie->title }}" class="w-12 h-16 object-cover rounded-md border border-gray-700">
+                        @else
+                            <div class="w-12 h-16 bg-gray-800 rounded-md border border-gray-700 flex items-center justify-center text-xs text-gray-500">No Image</div>
+                        @endif
+                    </td>
+                    <td class="py-4 px-6 font-semibold">{{ $movie->title }}</td>
+                    <td class="py-4 px-6">{{ $movie->duration }} Menit</td>
+                    <td class="py-4 px-6">
+                        <span class="bg-gray-800 text-ticketor-gray px-2 py-1 rounded text-xs">{{ $movie->genre }}</span>
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <a href="{{ route('admin.movies.edit', $movie) }}" class="text-ticketor-neon hover:text-yellow-400 transition">Edit</a>
+                        <form action="{{ route('admin.movies.destroy', $movie) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus film ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-500 hover:text-red-400 transition">Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-ticketor-gray">
+                        Belum ada data film. Silakan tambah film baru.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    @if($movies->hasPages())
+    <div class="p-4 border-t border-gray-800">
+        {{ $movies->links() }}
+    </div>
+    @endif
+</div>
+@endsection

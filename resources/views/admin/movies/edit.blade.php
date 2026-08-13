@@ -1,80 +1,69 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Edit Film</h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+@section('header', 'Edit Film')
 
-                @if ($movie->poster)
-                    <img src="{{ $movie->poster }}" class="w-24 h-36 object-cover rounded mb-4">
-                @endif
+@section('content')
+<div class="max-w-5xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-white">Edit Data Film</h2>
+            <p class="text-ticketor-gray text-sm mt-1">Perbarui informasi film {{ $movie->title }}</p>
+        </div>
+        <a href="{{ route('admin.movies.index') }}" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-700 transition">
+            Batal
+        </a>
+    </div>
 
-                <form action="{{ route('admin.movies.update', $movie) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                    @csrf
-                    @method('PUT')
+    <form action="{{ route('admin.movies.update', $movie) }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        @csrf
+        @method('PUT')
+        
+        <div class="lg:col-span-2 bg-ticketor-card p-6 rounded-xl border border-gray-800 space-y-5">
+            <div>
+                <label for="title" class="block text-sm font-medium text-ticketor-gray mb-2">Judul Film</label>
+                <input type="text" name="title" id="title" value="{{ old('title', $movie->title) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                @error('title') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+            </div>
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Judul</label>
-                        <input type="text" name="title" value="{{ old('title', $movie->title) }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                        @error('title') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="genre" class="block text-sm font-medium text-ticketor-gray mb-2">Genre</label>
+                    <input type="text" name="genre" id="genre" value="{{ old('genre', $movie->genre) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                    @error('genre') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label for="duration" class="block text-sm font-medium text-ticketor-gray mb-2">Durasi (Menit)</label>
+                    <input type="number" name="duration" id="duration" value="{{ old('duration', $movie->duration) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                    @error('duration') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+            </div>
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Ganti Poster (opsional)</label>
-                        <input type="file" name="poster" class="mt-1 block w-full">
-                        @error('poster') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Sinopsis</label>
-                        <textarea name="synopsis" rows="4" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('synopsis', $movie->synopsis) }}</textarea>
-                        @error('synopsis') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Genre</label>
-                            <input type="text" name="genre" value="{{ old('genre', $movie->genre) }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('genre') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Durasi (menit)</label>
-                            <input type="number" name="duration" value="{{ old('duration', $movie->duration) }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('duration') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Rating</label>
-                            <input type="text" name="rating" value="{{ old('rating', $movie->rating) }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('rating') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Trailer (URL)</label>
-                            <input type="text" name="trailer" value="{{ old('trailer', $movie->trailer) }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('trailer') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Status</label>
-                        <select name="status" class="mt-1 block w-full border-gray-300 rounded-md">
-                            <option value="coming_soon" {{ old('status', $movie->status) === 'coming_soon' ? 'selected' : '' }}>Coming Soon</option>
-                            <option value="now_showing" {{ old('status', $movie->status) === 'now_showing' ? 'selected' : '' }}>Now Showing</option>
-                        </select>
-                        @error('status') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Update</button>
-                        <a href="{{ route('admin.movies.index') }}" class="px-4 py-2 bg-gray-200 rounded">Batal</a>
-                    </div>
-                </form>
-
+            <div>
+                <label for="description" class="block text-sm font-medium text-ticketor-gray mb-2">Sinopsis Film</label>
+                <textarea name="description" id="description" rows="5" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">{{ old('description', $movie->description) }}</textarea>
+                @error('description') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
             </div>
         </div>
-    </div>
-</x-app-layout>
+
+        <div class="space-y-6">
+            <div class="bg-ticketor-card p-6 rounded-xl border border-gray-800">
+                <label class="block text-sm font-medium text-ticketor-gray mb-3">Poster Saat Ini</label>
+                
+                @if($movie->poster)
+                    <div class="mb-4 rounded-lg overflow-hidden border border-gray-800">
+                        <img src="{{ asset('storage/' . $movie->poster) }}" alt="{{ $movie->title }}" class="w-full h-64 object-cover">
+                    </div>
+                @endif
+
+                <label class="block text-sm font-medium text-ticketor-gray mb-2">Ganti Poster (Opsional)</label>
+                <input type="file" name="poster" id="poster" class="w-full text-xs text-ticketor-gray file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-ticketor-neon file:text-black hover:file:bg-yellow-400">
+                @error('poster') <span class="text-red-500 text-xs mt-2 block">{{ $message }}</span> @enderror
+            </div>
+
+            <button type="submit" class="w-full bg-ticketor-neon text-black font-bold py-3.5 rounded-xl hover:bg-yellow-400 transition shadow-lg shadow-ticketor-neon/10">
+                Perbarui Film
+            </button>
+        </div>
+    </form>
+</div>
+@endsection

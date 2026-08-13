@@ -1,67 +1,65 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Tambah Jadwal Film</h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+@section('header', 'Tambah Jadwal Tayang')
 
-                <form action="{{ route('admin.schedules.store') }}" method="POST" class="space-y-4">
-                    @csrf
+@section('content')
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-white">Atur Jadwal Tayang</h2>
+            <p class="text-ticketor-gray text-sm mt-1">Sistem akan memvalidasi bentrokan waktu secara otomatis.</p>
+        </div>
+        <a href="{{ route('admin.schedules.index') }}" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-700 transition">
+            Batal
+        </a>
+    </div>
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Film</label>
-                        <select name="movie_id" class="mt-1 block w-full border-gray-300 rounded-md">
-                            <option value="">-- Pilih Film --</option>
-                            @foreach ($movies as $movie)
-                                <option value="{{ $movie->id }}" {{ old('movie_id') == $movie->id ? 'selected' : '' }}>
-                                    {{ $movie->title }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('movie_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
+    <form action="{{ route('admin.schedules.store') }}" method="POST" class="bg-ticketor-card p-6 rounded-xl border border-gray-800 space-y-5">
+        @csrf
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Bioskop</label>
-                        <select name="cinema_id" class="mt-1 block w-full border-gray-300 rounded-md">
-                            <option value="">-- Pilih Bioskop --</option>
-                            @foreach ($cinemas as $cinema)
-                                <option value="{{ $cinema->id }}" {{ old('cinema_id') == $cinema->id ? 'selected' : '' }}>
-                                    {{ $cinema->name }} ({{ $cinema->brand }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('cinema_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
+        <div>
+            <label for="movie_id" class="block text-sm font-medium text-ticketor-gray mb-2">Pilih Film</label>
+            <select name="movie_id" id="movie_id" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                <option value="">-- Pilih Film --</option>
+                @foreach($movies as $movie)
+                    <option value="{{ $movie->id }}" {{ old('movie_id') == $movie->id ? 'selected' : '' }}>
+                        {{ $movie->title }} ({{ $movie->duration }} Menit)
+                    </option>
+                @endforeach
+            </select>
+            @error('movie_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Tanggal Tayang</label>
-                            <input type="date" name="show_date" value="{{ old('show_date') }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('show_date') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Jam Tayang</label>
-                            <input type="time" name="show_time" value="{{ old('show_time') }}" class="mt-1 block w-full border-gray-300 rounded-md">
-                            @error('show_time') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
+        <div>
+            <label for="cinema_id" class="block text-sm font-medium text-ticketor-gray mb-2">Pilih Studio / Bioskop</label>
+            <select name="cinema_id" id="cinema_id" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                <option value="">-- Pilih Cinema --</option>
+                @foreach($cinemas as $cinema)
+                    <option value="{{ $cinema->id }}" {{ old('cinema_id') == $cinema->id ? 'selected' : '' }}>
+                        {{ $cinema->name }}
+                    </option>
+                @endforeach
+            </select>
+            @error('cinema_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Harga Tiket (Rp)</label>
-                        <input type="number" name="price" value="{{ old('price') }}" min="0" step="1000" class="mt-1 block w-full border-gray-300 rounded-md">
-                        @error('price') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="start_time" class="block text-sm font-medium text-ticketor-gray mb-2">Waktu Tayang</label>
+                <input type="datetime-local" name="start_time" id="start_time" value="{{ old('start_time') }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                @error('start_time') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+            </div>
 
-                    <div class="flex gap-2">
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Simpan</button>
-                        <a href="{{ route('admin.schedules.index') }}" class="px-4 py-2 bg-gray-200 rounded">Batal</a>
-                    </div>
-                </form>
-
+            <div>
+                <label for="price" class="block text-sm font-medium text-ticketor-gray mb-2">Harga Tiket (Rp)</label>
+                <input type="number" name="price" id="price" value="{{ old('price', 50000) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                @error('price') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
             </div>
         </div>
-    </div>
-</x-app-layout>
+
+        <button type="submit" class="w-full bg-ticketor-neon text-black font-bold py-3.5 rounded-xl hover:bg-yellow-400 transition shadow-lg shadow-ticketor-neon/10 mt-4">
+            Publikasikan Jadwal
+        </button>
+    </form>
+</div>
+@endsection
