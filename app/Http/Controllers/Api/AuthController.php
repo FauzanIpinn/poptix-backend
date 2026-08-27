@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,7 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse {
+    public function register(Request $request): JsonResponse
+    {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -30,16 +33,19 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $user->assignRole('user'); // <-- FIX: tanpa ini user tidak pernah bisa booking
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Registrasi berhasil.',
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ], 201);
     }
 
-    public function login(Request $request): JsonResponse {
+    public function login(Request $request): JsonResponse
+    {
         $validator = Validator::make($request->all(), [
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
@@ -54,7 +60,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Email atau password salah.',
             ], 401);
@@ -64,22 +70,22 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil.',
-            'user' => $user,
+            'user' => new UserResourceppp($user),
             'token' => $token,
         ], 200);
     }
 
-    public function logout(Request $request): JsonResponse {
+    public function logout(Request $request): JsonResponse
+    {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Logout berhasil.',
-        ]);
+        return response()->json(['message' => 'Logout berhasil.']);
     }
 
-    public function me(Request $request): JsonResponse {
+    public function me(Request $request): JsonResponse
+    {
         return response()->json([
-            'user' => $request->user()->load('roles'),
+            'user' => new UserResource($request->user()->load('roles')),
         ]);
     }
 }

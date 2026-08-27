@@ -7,9 +7,11 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\Schedule;
 use App\Models\Seat;
+use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use RuntimeException;
 
 class BookingController extends Controller
 {
@@ -26,54 +28,22 @@ class BookingController extends Controller
         return view('schedules.seats', compact('schedule', 'bookedSeatIds'));
     }
 
+    public function __construct(protected BookingService $bookingService) {}
+
     public function store(StoreBookingRequest $request): RedirectResponse {
         $validated = $request->validated();
 
         try {
-            $booking = DB::transaction(function () use ($validated, $request) {
-                $schedule = Schedule::findOrFail($validated['schedule_id']);
-
-                $seats = Seat::whereIn('id', $validated['seat_ids'])
-                    ->lockForUpdate()
-                    ->get();
-
-                $alreadyBooked = BookingSeat::where('schedule_id', $schedule->id)
-                    ->whereIn('seat_id', $validated['seat_ids'])
-                    ->whereHas('booking', function ($query) {
-                        $query->whereIn('status', ['pending', 'paid']);
-                    })
-                    ->exists();
-
-                if ($alreadyBooked) {
-                    throw new \Exception('Salah satu kursi yang kamu pilih baru saja dipesan orang lain. Silakan pilih kursi lain.');
-                }
-
-                $totalPrice = $seats->count() * $schedule->price;
-
-                $booking = Booking::create([
-                    'user_id' => $request->user()->id,
-                    'schedule_id' => $schedule->id,
-                    'total_price' => $totalPrice,
-                    'status' => 'pending',
-                    'expires_at' => now()->addMinutes(15),
-                ]);
-
-                foreach ($seats as $seat) {
-                    $booking->bookingSeats()->create([
-                        'schedule_id' => $schedule->id,
-                        'seat_id' => $seat->id,
-                        'price' => $schedule->price,
-                    ]);
-                }
-
-                return $booking;
-            });
-        } catch (\Exception $e) {
+            $booking = $this->bookingService->createBooking(
+                $request->user(),
+                $validated['schedule_id'],
+                $validated['seat_ids']
+            );
+        } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()
-            ->route('bookings.show', $booking)
+        return redirect()->route('bookings.show', $booking)
             ->with('success', 'Booking berhasil dibuat! Selesaikan pembayaran dalam 15 menit.');
     }
 
@@ -96,11 +66,8 @@ class BookingController extends Controller
 
     public function cancel(Booking $booking): RedirectResponse {
         $this->authorize('cancel', $booking);
+        $this->bookingService->cancelBooking($booking);
 
-        $booking->update(['status' => 'cancelled']);
-
-        return redirect()
-        ->route('bookings.index')
-        ->with('success', 'Booking berhasil dibatalkan.');
+        return redirect()->route('bookings.index')->with('success', 'Booking berhasil dibatalkan.');
     }
 }

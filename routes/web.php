@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\CinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MovieController;
 use App\Http\Controllers\Admin\ScheduleController;
-use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\BookingController;              // <-- controller WEB (return View)
 use App\Http\Controllers\MovieCatalogController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentNotificationController;
@@ -46,5 +46,7 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->name('bookings.checkout');
 });
+
+Route::post('/payment/notification', [PaymentNotificationController::class, 'handle'])->name('payment.notification');
 
 require __DIR__ . '/auth.php';

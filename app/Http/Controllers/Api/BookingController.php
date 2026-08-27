@@ -10,9 +10,11 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\Schedule;
 use App\Models\Seat;
+use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class BookingController extends Controller
 {
@@ -35,53 +37,20 @@ class BookingController extends Controller
         return SeatResource::collection($seats);
     }
 
+    public function __construct(protected BookingService $bookingService) {}
+
     public function store(StoreBookingRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         try {
-            $booking = DB::transaction(function () use ($validated, $request) {
-                $schedule = Schedule::findOrFail($validated['schedule_id']);
-
-                $seats = Seat::whereIn('id', $validated['seat_ids'])
-                    ->lockForUpdate()
-                    ->get();
-
-                $alreadyBooked = BookingSeat::where('schedule_id', $schedule->id)
-                    ->whereIn('seat_id', $validated['seat_ids'])
-                    ->whereHas('booking', function ($query) {
-                        $query->whereIn('status', ['pending', 'paid']);
-                    })
-                    ->exists();
-
-                if ($alreadyBooked) {
-                    throw new \Exception('Salah satu kursi yang kamu pilih baru saja dipesan orang lain.');
-                }
-
-                $totalPrice = $seats->count() * $schedule->price;
-
-                $booking = Booking::create([
-                    'user_id' => $request->user()->id,
-                    'schedule_id' => $schedule->id,
-                    'total_price' => $totalPrice,
-                    'status' => 'pending',
-                    'expires_at' => now()->addMinutes(15),
-                ]);
-
-                foreach ($seats as $seat) {
-                    $booking->bookingSeats()->create([
-                        'schedule_id' => $schedule->id,
-                        'seat_id' => $seat->id,
-                        'price' => $schedule->price,
-                    ]);
-                }
-
-                return $booking;
-            });
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 409); // 409 Conflict — status code yang tepat buat resource conflict
+            $booking = $this->bookingService->createBooking(
+                $request->user(),
+                $validated['schedule_id'],
+                $validated['seat_ids']
+            );
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
         }
 
         $booking->load(['schedule.movie', 'schedule.cinema', 'bookingSeats.seat']);
@@ -92,8 +61,7 @@ class BookingController extends Controller
         ], 201);
     }
 
-    public function index(): AnonymousResourceCollection
-    {
+    public function index(): AnonymousResourceCollection {
         $bookings = auth()->user()
             ->bookings()
             ->with(['schedule.movie', 'schedule.cinema'])
@@ -103,24 +71,21 @@ class BookingController extends Controller
         return BookingResource::collection($bookings);
     }
 
-    public function show(Booking $booking): BookingResource|JsonResponse
-    {
-        $this->authorize('view', $booking); // reuse BookingPolicy dari Tahap 6
+    public function show(Booking $booking): BookingResource|JsonResponse {
+        $this->authorize('view', $booking);
 
         $booking->load(['schedule.movie', 'schedule.cinema', 'bookingSeats.seat']);
 
         return new BookingResource($booking);
     }
 
-    public function cancel(Booking $booking): JsonResponse
-    {
-        $this->authorize('cancel', $booking); // reuse BookingPolicy dari Tahap 6
-
-        $booking->update(['status' => 'cancelled']);
+    public function cancel(Booking $booking): JsonResponse {
+        $this->authorize('cancel', $booking);
+        $booking = $this->bookingService->cancelBooking($booking);
 
         return response()->json([
             'message' => 'Booking berhasil dibatalkan.',
-            'data' => new BookingResource($booking->fresh()),
+            'data' => new BookingResource($booking),
         ]);
     }
 }
