@@ -70,7 +70,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil.',
-            'user' => new UserResourceppp($user),
+            'user' => new UserResource($user),
             'token' => $token,
         ], 200);
     }

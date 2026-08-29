@@ -17,6 +17,7 @@ class StoreBookingRequest extends FormRequest
             'schedule_id' => ['required', 'integer', 'exists:schedules,id'],
             'seat_ids' => ['required', 'array', 'min:1', 'max:6'],
             'seat_ids.*' => ['integer', 'exists:seats,id'],
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
         ];
     }
 

@@ -9,7 +9,6 @@ use App\Models\Schedule;
 use App\Models\Seat;
 use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -37,7 +36,8 @@ class BookingController extends Controller
             $booking = $this->bookingService->createBooking(
                 $request->user(),
                 $validated['schedule_id'],
-                $validated['seat_ids']
+                $validated['seat_ids'],
+                $validated['idempotency_key'] ?? null,
             );
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());

@@ -6,13 +6,22 @@ use App\Models\Booking;
 use App\Models\Schedule;
 use App\Models\Seat;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class BookingService
 {
-    public function createBooking(User $user, int $scheduleId, array $seatIds): Booking {
-        return DB::transaction(function () use ($user, $scheduleId, $seatIds) {
+    public function createBooking(User $user, int $scheduleId, array $seatIds, $idempotencyKey = null): Booking {
+        if ($idempotencyKey) {
+            $cacheKey = "booking-idempotency:{$user->id}:{$idempotencyKey}";
+            $existingBookingId = Cache::get($cacheKey);
+            if ($existingBookingId) {
+                return Booking::findOrFail($existingBookingId);
+            }
+        }
+
+        $booking = DB::transaction(function () use ($user, $scheduleId, $seatIds) {
             $schedule = Schedule::findOrFail($scheduleId);
 
             $seats = Seat::whereIn('id', $seatIds)->lockForUpdate()->get();

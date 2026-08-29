@@ -18,8 +18,7 @@ use RuntimeException;
 
 class BookingController extends Controller
 {
-    public function availableSeats(Schedule $schedule): AnonymousResourceCollection
-    {
+    public function availableSeats(Schedule $schedule): AnonymousResourceCollection {
         $schedule->load('cinema.seats');
 
         $bookedSeatIds = BookingSeat::where('schedule_id', $schedule->id)
@@ -39,15 +38,15 @@ class BookingController extends Controller
 
     public function __construct(protected BookingService $bookingService) {}
 
-    public function store(StoreBookingRequest $request): JsonResponse
-    {
+    public function store(StoreBookingRequest $request): JsonResponse {
         $validated = $request->validated();
 
         try {
             $booking = $this->bookingService->createBooking(
                 $request->user(),
                 $validated['schedule_id'],
-                $validated['seat_ids']
+                $validated['seat_ids'],
+                $validated['idempotency_key'] ?? null,
             );
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 409);
