@@ -15,16 +15,19 @@ class MovieResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'poster' => $this->poster,
-            'synopsis' => $this->synopsis,
-            'genre' => $this->genre,
-            'duration' => $this->duration,
+            'id'                 => $this->id,
+            'title'              => $this->title,
+            'poster'             => $this->poster,
+            'synopsis'           => $this->synopsis,
+            'genre'              => $this->genre,
+            'duration'           => $this->duration,
             'duration_formatted' => floor($this->duration / 60) . 'h ' . ($this->duration % 60) . 'm',
-            'rating' => $this->rating,
-            'trailer' => $this->trailer,
-            'status' => $this->status,
+            'rating'             => $this->rating,
+            'trailer'            => $this->trailer,
+            'status'             => $this->status,
+
+            // Relasi — hanya di-include jika sudah di-eager load
+            'schedules' => ScheduleResource::collection($this->whenLoaded('schedules')),
         ];
     }
 }

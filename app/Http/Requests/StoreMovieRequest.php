@@ -22,14 +22,33 @@ class StoreMovieRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'poster' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'title'    => ['required', 'string', 'max:255'],
+            'poster'   => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'synopsis' => ['required', 'string'],
-            'genre' => ['required', 'string', 'max:100'],
+            'genre'    => ['required', 'string', 'max:100'],
             'duration' => ['required', 'integer', 'min:1'],
-            'rating' => ['nullable', 'string', 'max:10'],
-            'trailer' => ['nullable', 'url'],
-            'status' => ['required', 'in:now_showing,coming_soon'],
+            'rating'   => ['nullable', 'string', 'max:10'],
+            'trailer'  => ['nullable', 'url'],
+            'status'   => ['required', 'in:now_showing,coming_soon'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required'    => 'Judul film wajib diisi.',
+            'poster.required'   => 'Poster film wajib diunggah.',
+            'poster.image'      => 'File poster harus berupa gambar.',
+            'poster.mimes'      => 'Format poster harus JPG, JPEG, PNG, atau WEBP.',
+            'poster.max'        => 'Ukuran poster maksimal 2MB.',
+            'synopsis.required' => 'Sinopsis film wajib diisi.',
+            'genre.required'    => 'Genre film wajib diisi.',
+            'duration.required' => 'Durasi film wajib diisi.',
+            'duration.integer'  => 'Durasi harus berupa angka (dalam menit).',
+            'duration.min'      => 'Durasi minimal 1 menit.',
+            'trailer.url'       => 'URL trailer tidak valid.',
+            'status.required'   => 'Status film wajib dipilih.',
+            'status.in'         => 'Status film harus \'now_showing\' atau \'coming_soon\'.',
         ];
     }
 }

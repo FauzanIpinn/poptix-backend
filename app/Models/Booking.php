@@ -25,22 +25,25 @@ class Booking extends Model
         'paid_at',
     ];
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'total_price' => 'decimal:2',
-            'expires_at' => 'datetime',
-            'paid_at' => 'datetime',
+            'expires_at'  => 'datetime',
+            'paid_at'     => 'datetime',
         ];
     }
 
-    protected static function boot(): void {
+    protected static function boot(): void
+    {
         parent::boot();
         static::creating(function (Booking $booking) {
             $booking->booking_code = $booking->booking_code ?? static::generateBookingCode();
         });
     }
 
-    public static function generateBookingCode(): string {
+    public static function generateBookingCode(): string
+    {
         do {
             $code = 'PPX-' . strtoupper(Str::random(6));
         } while (static::where('booking_code', $code)->exists());
@@ -48,23 +51,40 @@ class Booking extends Model
         return $code;
     }
 
-    public function user(): BelongsTo {
+    // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function schedule(): BelongsTo {
+    public function schedule(): BelongsTo
+    {
         return $this->belongsTo(Schedule::class);
     }
 
-    public function bookingSeats(): HasMany {
+    public function bookingSeats(): HasMany
+    {
         return $this->hasMany(BookingSeat::class);
     }
 
-    public function scopePending($query) {
+    // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    /** Booking yang masih menunggu pembayaran. */
+    public function scopePending($query)
+    {
         return $query->where('status', 'pending');
     }
 
-    public function scopePaid($query) {
+    /** Booking yang sudah berhasil dibayar. */
+    public function scopePaid($query)
+    {
         return $query->where('status', 'paid');
+    }
+
+    /** Booking yang masih aktif (pending atau paid). */
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['pending', 'paid']);
     }
 }

@@ -19,26 +19,50 @@ class Schedule extends Model
         'price',
     ];
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'show_date' => 'date',
-            'price' => 'decimal:2',
+            'price'     => 'decimal:2',
         ];
     }
 
-    public function movie(): BelongsTo {
+    // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function movie(): BelongsTo
+    {
         return $this->belongsTo(Movie::class);
     }
 
-    public function cinema(): BelongsTo {
+    public function cinema(): BelongsTo
+    {
         return $this->belongsTo(Cinema::class);
     }
 
-    public function bookings(): HasMany {
+    public function bookings(): HasMany
+    {
         return $this->hasMany(Booking::class);
     }
 
-    public function bookingSeats(): HasMany {
+    public function bookingSeats(): HasMany
+    {
         return $this->hasMany(BookingSeat::class);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Menghitung jumlah kursi yang masih tersedia untuk jadwal ini.
+     * Hasil bisa di-cache di controller untuk performa optimal.
+     */
+    public function availableSeatsCount(): int
+    {
+        $totalSeats = $this->cinema()->withCount('seats')->first()->seats_count ?? 0;
+
+        $bookedSeats = $this->bookingSeats()
+            ->whereHas('booking', fn ($q) => $q->active())
+            ->count();
+
+        return max(0, $totalSeats - $bookedSeats);
     }
 }

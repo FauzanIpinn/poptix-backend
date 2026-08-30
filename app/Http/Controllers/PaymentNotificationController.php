@@ -2,74 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
+use App\Services\MidtransService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PaymentNotificationController extends Controller
 {
-    public function handle(Request $request): JsonResponse {
+    public function __construct(protected MidtransService $midtransService) {}
+
+    /**
+     * Menangani notifikasi webhook dari Midtrans.
+     *
+     * Seluruh logika bisnis (verifikasi, update status) didelegasikan
+     * sepenuhnya ke MidtransService.
+     */
+    public function handle(Request $request): JsonResponse
+    {
         $payload = $request->all();
 
-        $orderId = $payload['order_id'] ?? null;
-        $statusCode = $payload['status_code'] ?? null;
-        $grossAmount = $payload['gross_amount'] ?? null;
-        $signatureKey = $payload['signature_key'] ?? null;
+        try {
+            $this->midtransService->handleWebhookPayload($payload);
 
-        if (! $orderId || ! $statusCode || ! $grossAmount || ! $signatureKey) {
-            Log::warning('Midtrans notification: payload tidak lengkap.', $payload);
-            return response()->json(['message' => 'Payload tidak lengkap.'], 400);
-        }
-
-        $expectedSignature = hash(
-            'sha512',
-            $orderId . $statusCode . $grossAmount . config('midtrans.server_key')
-        );
-
-        if (! hash_equals($expectedSignature, $signatureKey)) {
-            Log::warning('Midtrans notification: signature tidak valid.', ['order_id' => $orderId]);
-            return response()->json(['message' => 'Signature tidak valid.'], 403);
-        }
-
-        $booking = Booking::where('midtrans_order_id', $orderId)->first();
-
-        if (! $booking) {
-            Log::warning('Midtrans notification: booking tidak ditemukan.', ['order_id' => $orderId]);
+            return response()->json(['message' => 'Notifikasi berhasil diproses.']);
+        } catch (\InvalidArgumentException $e) {
+            // Payload tidak lengkap
+            return response()->json(['message' => $e->getMessage()], 400);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            // Signature tidak valid (abort 403 dari service)
+            return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
+        } catch (ModelNotFoundException $e) {
+            // Booking tidak ditemukan
             return response()->json(['message' => 'Booking tidak ditemukan.'], 404);
+        } catch (\Throwable $e) {
+            // Tangkap error tak terduga agar webhook tidak gagal diam-diam
+            Log::error('Midtrans webhook: error tidak terduga.', [
+                'error'   => $e->getMessage(),
+                'payload' => $payload,
+            ]);
+            return response()->json(['message' => 'Terjadi kesalahan pada server.'], 500);
         }
-
-        if ($booking->status === 'paid') {
-            return response()->json(['message' => 'Notifikasi sudah pernah diproses sebelumnya.']);
-        }
-        $transactionStatus = $payload['transaction_status'] ?? null;
-        $fraudStatus = $payload['fraud_status'] ?? null;
-        $paymentType = $payload['payment_type'] ?? null;
-
-        if ($transactionStatus === 'capture') {
-            if ($fraudStatus === 'accept') {
-                $this->markAsPaid($booking, $paymentType);
-            }
-        } elseif ($transactionStatus === 'settlement') {
-            $this->markAsPaid($booking, $paymentType);
-        } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
-            $booking->update(['status' => 'expired']);
-        }
-
-        Log::info('Midtrans notification diproses.', [
-            'order_id' => $orderId,
-            'transaction_status' => $transactionStatus,
-            'booking_id' => $booking->id,
-        ]);
-
-        return response()->json(['message' => 'Notifikasi berhasil diproses.']);
-    }
-
-    protected function markAsPaid(Booking $booking, ?string $paymentType): void {
-        $booking->update([
-            'status' => 'paid',
-            'payment_type' => $paymentType,
-            'paid_at' => now(),
-        ]);
     }
 }

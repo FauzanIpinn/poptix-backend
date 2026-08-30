@@ -29,6 +29,16 @@ class SchedulePolicy
 
     public function delete(User $user, Schedule $schedule): bool
     {
-        return $user->hasRole('admin');
+        if (! $user->hasRole('admin')) {
+            return false;
+        }
+
+        // Cegah penghapusan jadwal yang masih memiliki booking aktif (pending/paid)
+        // untuk menjaga integritas data dan melindungi transaksi pengguna.
+        $hasActiveBookings = $schedule->bookings()
+            ->whereIn('status', ['pending', 'paid'])
+            ->exists();
+
+        return ! $hasActiveBookings;
     }
 }

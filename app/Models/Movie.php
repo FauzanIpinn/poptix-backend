@@ -21,17 +21,31 @@ class Movie extends Model
         'status',
     ];
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
-            'duration' => 'integer'
+            'duration' => 'integer',
         ];
     }
-    
-    public function scopeComingSoon($query) {
-        return $query->where('status', 'coming_soon');
+
+    // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
     }
 
-    public function schedules(): HasMany {
-        return $this->hasMany(Schedule::class);
+    // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    /** Film yang sedang tayang. */
+    public function scopeNowShowing($query)
+    {
+        return $query->where('status', 'now_showing');
+    }
+
+    /** Film yang akan segera tayang. */
+    public function scopeComingSoon($query)
+    {
+        return $query->where('status', 'coming_soon');
     }
 }

@@ -3,61 +3,43 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLoginRequest;
+use App\Http\Requests\StoreRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    /**
+     * Mendaftarkan pengguna baru dan mengembalikan token akses.
+     */
+    public function register(StoreRegisterRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validasi gagal.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        $user->assignRole('user'); // <-- FIX: tanpa ini user tidak pernah bisa booking
+        $user->assignRole('user');
 
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Registrasi berhasil.',
-            'user' => new UserResource($user),
-            'token' => $token,
+            'user'    => new UserResource($user),
+            'token'   => $token,
         ], 201);
     }
 
-    public function login(Request $request): JsonResponse
+    /**
+     * Login dan mendapatkan token akses.
+     */
+    public function login(StoreLoginRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validasi gagal.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
@@ -70,11 +52,14 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil.',
-            'user' => new UserResource($user),
-            'token' => $token,
+            'user'    => new UserResource($user),
+            'token'   => $token,
         ], 200);
     }
 
+    /**
+     * Menghapus token akses pengguna yang sedang login.
+     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -82,6 +67,9 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logout berhasil.']);
     }
 
+    /**
+     * Mengembalikan data profil pengguna yang sedang login.
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json([
