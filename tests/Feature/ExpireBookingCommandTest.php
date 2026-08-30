@@ -14,82 +14,52 @@ class ExpireBookingCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function makeBooking(): Booking {
+    public function test_booking_pending_yang_lewat_waktu_jadi_expired(): void {
         $schedule = Schedule::factory()->create([
             'movie_id' => Movie::factory(),
             'cinema_id' => Cinema::factory(),
-            'price' => 50000,
         ]);
+        $user = User::factory()->create();
 
-        return Booking::factory()->create([
-            'user_id' => User::factory(),
+        $expiredBooking = Booking::factory()->create([
+            'user_id' => $user->id,
             'schedule_id' => $schedule->id,
-            'total_price' => 50000,
             'status' => 'pending',
-            'midtrans_order_id' => 'PPX-TEST123-1234567890',
+            'expires_at' => now()->subMinutes(5),
         ]);
+
+        $stillValidBooking = Booking::factory()->create([
+            'user_id' => $user->id,
+            'schedule_id' => $schedule->id,
+            'status' => 'pending',
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $this->artisan('bookings:expire')->assertSuccessful();
+
+        $expired = $expiredBooking->fresh();
+        $stillValid = $stillValidBooking->fresh();
+
+        $this->assertEquals('expired', $expired->status);
+        $this->assertEquals('pending', $stillValid->status);
     }
 
-    protected function signature(string $orderId, string $statusCode, string $grossAmount): string {
-        return hash('sha512', $orderId . $statusCode . $grossAmount . config('midtrans.server_key'));
-    }
+    public function test_booking_yang_sudah_dibayar_tidak_ikut_di_expire(): void {
+        $schedule = Schedule::factory()->create([
+            'movie_id' => Movie::factory(),
+            'cinema_id' => Cinema::factory(),
+        ]);
+        $user = User::factory()->create();
 
-    public function test_notifikasi_valid_menandai_booking_paid(): void {
-        $booking = $this->makeBooking();
+        $paidBooking = Booking::factory()->create([
+            'user_id' => $user->id,
+            'schedule_id' => $schedule->id,
+            'status' => 'paid',
+            'expires_at' => now()->subMinutes(30), // lewat waktu, tapi sudah paid
+        ]);
 
-        $payload = [
-            'order_id' => $booking->midtrans_order_id,
-            'status_code' => '200',
-            'gross_amount' => '50000.00',
-            'transaction_status' => 'settlement',
-            'fraud_status' => 'accept',
-            'payment_type' => 'gopay',
-        ];
-        $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
+        $this->artisan('bookings:expire')->assertSuccessful();
 
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
-
-        $fresh = $booking->fresh();
-        $this->assertEquals('paid', $fresh->status->value ?? $fresh->status);
-        $this->assertNotNull($fresh->paid_at);
-    }
-
-    public function test_notifikasi_signature_invalid_ditolak(): void {
-        $booking = $this->makeBooking();
-
-        $payload = [
-            'order_id' => $booking->midtrans_order_id,
-            'status_code' => '200',
-            'gross_amount' => '50000.00',
-            'transaction_status' => 'settlement',
-            'signature_key' => 'signature-palsu',
-        ];
-
-        $this->postJson('/payment/notification', $payload)->assertStatus(403);
-
-        $fresh = $booking->fresh();
-        $this->assertEquals('pending', $fresh->status->value ?? $fresh->status);
-    }
-
-    public function test_notifikasi_duplikat_tidak_diproses_ulang(): void {
-        $booking = $this->makeBooking();
-
-        $payload = [
-            'order_id' => $booking->midtrans_order_id,
-            'status_code' => '200',
-            'gross_amount' => '50000.00',
-            'transaction_status' => 'settlement',
-            'fraud_status' => 'accept',
-            'payment_type' => 'gopay',
-        ];
-        $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
-
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
-        $paidAtFirst = $booking->fresh()->paid_at;
-
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
-        $paidAtSecond = $booking->fresh()->paid_at;
-
-        $this->assertTrue($paidAtFirst->eq($paidAtSecond));
+        $this->assertEquals('paid', $paidBooking->fresh()->status);
     }
 }

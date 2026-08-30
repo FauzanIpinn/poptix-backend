@@ -21,7 +21,7 @@ class BookingService
             }
         }
 
-        $booking = DB::transaction(function () use ($user, $scheduleId, $seatIds) {
+        return DB::transaction(function () use ($user, $scheduleId, $seatIds) {
             $schedule = Schedule::findOrFail($scheduleId);
 
             $seats = Seat::whereIn('id', $seatIds)->lockForUpdate()->get();
