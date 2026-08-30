@@ -12,7 +12,7 @@ use RuntimeException;
 
 class BookingService
 {
-    public function createBooking(User $user, int $scheduleId, array $seatIds, $idempotencyKey = null): Booking {
+    public function createBooking(User $user, int $scheduleId, array $seatIds, ?string $idempotencyKey = null): Booking {
         if ($idempotencyKey) {
             $cacheKey = "booking-idempotency:{$user->id}:{$idempotencyKey}";
             $existingBookingId = Cache::get($cacheKey);
@@ -21,7 +21,7 @@ class BookingService
             }
         }
 
-        return DB::transaction(function () use ($user, $scheduleId, $seatIds) {
+        $booking = DB::transaction(function () use ($user, $scheduleId, $seatIds) {
             $schedule = Schedule::findOrFail($scheduleId);
 
             $seats = Seat::whereIn('id', $seatIds)->lockForUpdate()->get();
@@ -49,14 +49,20 @@ class BookingService
 
             foreach ($seats as $seat) {
                 $booking->bookingSeats()->create([
-                    'schedule_id' => $schedule->id,
-                    'seat_id' => $seat->id,
-                    'price' => $schedule->price,
+                'schedule_id' => $schedule->id,
+                'seat_id' => $seat->id,
+                'price' => $schedule->price,
                 ]);
             }
 
             return $booking;
         });
+
+        if ($idempotencyKey) {
+            Cache::put("booking-idempotency:{$user->id}:{$idempotencyKey}", $booking->id, now()->addMinutes(5));
+        }
+
+        return $booking;
     }
 
     public function cancelBooking(Booking $booking): Booking {
