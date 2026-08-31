@@ -35,9 +35,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Login dan mendapatkan token akses.
-     */
+    
     public function login(StoreLoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)->first();

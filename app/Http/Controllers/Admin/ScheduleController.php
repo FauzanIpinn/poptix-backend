@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateScheduleRequest;
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Schedule;
+use App\Models\Studio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,9 +22,9 @@ class ScheduleController extends Controller
     public function create(): View
     {
         $movies = Movie::orderBy('title')->get();
-        $cinemas = Cinema::orderBy('name')->get();
+        $studios = Studio::orderBy('name')->get();
 
-        return view('admin.schedules.create', compact('movies', 'cinemas'));
+        return view('admin.schedules.create', compact('movies', 'studios'));
     }
 
     public function store(StoreScheduleRequest $request): RedirectResponse {
@@ -36,9 +37,9 @@ class ScheduleController extends Controller
 
     public function edit(Schedule $schedule): View {
         $movies = Movie::orderBy('title')->get();
-        $cinemas = Cinema::orderBy('name')->get();
+        $studios = Studio::orderBy('name')->get();
 
-        return view('admin.schedules.edit', compact('schedule', 'movies', 'cinemas'));
+        return view('admin.schedules.edit', compact('schedule', 'movies', 'studios'));
     }
 
     public function update(UpdateScheduleRequest $request, Schedule $schedule): RedirectResponse {

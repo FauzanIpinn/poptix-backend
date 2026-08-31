@@ -1,30 +1,44 @@
 <x-app-layout>
     <x-slot name="header">
-        Edit Bioskop
+        Edit Jadwal Film
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <x-admin.card>
-                <form action="{{ route('admin.cinemas.update', $cinema) }}" method="POST" class="space-y-5">
+                <form action="{{ route('admin.schedules.update', $schedule) }}" method="POST" class="space-y-5">
                     @csrf
                     @method('PUT')
 
-                    <x-admin.input name="name" label="Nama Cabang" required :value="$cinema->name" />
-
-                    <x-admin.select name="brand" label="Brand" required>
-                        <option value="XXI" @selected(old('brand', $cinema->brand) === 'XXI')>XXI</option>
-                        <option value="CGV" @selected(old('brand', $cinema->brand) === 'CGV')>CGV</option>
-                        <option value="Cinepolis" @selected(old('brand', $cinema->brand) === 'Cinepolis')>Cinepolis</option>
+                    <x-admin.select name="movie_id" label="Film" required>
+                        @foreach ($movies as $movie)
+                            <option value="{{ $movie->id }}" @selected(old('movie_id', $schedule->movie_id) == $movie->id)>
+                                {{ $movie->title }}
+                            </option>
+                        @endforeach
                     </x-admin.select>
 
-                    <x-admin.input name="city" label="Kota" required :value="$cinema->city" />
+                    <x-admin.select name="studio_id" label="Studio" required>
+                        @foreach ($studios as $studio)
+                            <option value="{{ $studio->id }}" @selected(old('studio_id', $schedule->studio_id) == $studio->id)>
+                                {{ $studio->cinema->name }} - {{ $studio->name }}
+                            </option>
+                        @endforeach
+                    </x-admin.select>
 
-                    <x-admin.textarea name="address" label="Alamat Lengkap" required rows="3" :value="$cinema->address" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <x-admin.input type="date" name="show_date" label="Tanggal Tayang" required
+                            :value="$schedule->show_date->format('Y-m-d')" />
+                        <x-admin.input type="time" name="show_time" label="Jam Tayang" required
+                            :value="\Illuminate\Support\Carbon::parse($schedule->show_time)->format('H:i')" />
+                    </div>
+
+                    <x-admin.input type="number" name="price" label="Harga Tiket (Rp)" required min="0" step="1000"
+                        :value="$schedule->price" />
 
                     <div class="flex gap-2 pt-2">
-                        <x-admin.button type="submit">Update Bioskop</x-admin.button>
-                        <x-admin.button variant="secondary" href="{{ route('admin.cinemas.index') }}">Batal</x-admin.button>
+                        <x-admin.button type="submit">Update Jadwal</x-admin.button>
+                        <x-admin.button variant="secondary" href="{{ route('admin.schedules.index') }}">Batal</x-admin.button>
                     </div>
                 </form>
             </x-admin.card>

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('show_date');
             $table->time('show_time');
             $table->decimal('price', 10, 2);
+            $table->foreignId('studio_id')->after('cinema_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -25,8 +26,10 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
+    public function down(): void {
+        Schema::table('schedules', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('studio_id');
+        });
         Schema::dropIfExists('schedules');
     }
 };

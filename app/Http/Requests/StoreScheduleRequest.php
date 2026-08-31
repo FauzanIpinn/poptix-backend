@@ -16,10 +16,18 @@ class StoreScheduleRequest extends FormRequest
     public function rules(): array {
         return [
             'movie_id' => ['required', 'exists:movies,id'],
+            'studio_id' => ['required', 'exists:studios,id'],
             'cinema_id' => ['required', 'exists:cinemas,id'],
             'show_date' => ['required', 'date', 'after_or_equal:today'],
             'show_time' => ['required', 'date_format:H:i'],
             'price' => ['required', 'numeric', 'min:0'],
+        ];
+    }
+
+    public function messages(): array {
+        return [
+            'studio_id.required' => 'Studio wajib dipilih.',
+            'studio_id.exists' => 'Studio yang dipilih tidak valid.',
         ];
     }
 

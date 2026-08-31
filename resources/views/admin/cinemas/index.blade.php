@@ -1,65 +1,69 @@
-<x-app-layout>
-    <x-slot name="header">
-        Kelola Bioskop
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <x-admin.card>
-                <x-admin.alert />
+@section('header', 'Penjadwalan Bioskop')
 
-                <div class="flex justify-between items-center mb-5">
-                    <p class="text-sm text-gray-400">{{ $cinemas->total() }} bioskop terdaftar</p>
-                    <x-admin.button href="{{ route('admin.cinemas.create') }}">
-                        + Tambah Bioskop
-                    </x-admin.button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left border-b border-white/10 text-gray-400">
-                                <th class="p-3 font-medium">Nama Cabang</th>
-                                <th class="p-3 font-medium">Brand</th>
-                                <th class="p-3 font-medium">Kota</th>
-                                <th class="p-3 font-medium">Alamat</th>
-                                <th class="p-3 font-medium">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($cinemas as $cinema)
-                                <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                                    <td class="p-3 text-white font-medium">{{ $cinema->name }}</td>
-                                    <td class="p-3"><x-admin.badge variant="info">{{ $cinema->brand }}</x-admin.badge></td>
-                                    <td class="p-3 text-gray-400">{{ $cinema->city }}</td>
-                                    <td class="p-3 text-gray-400">{{ Str::limit($cinema->address, 40) }}</td>
-                                    <td class="p-3">
-                                        <div class="flex items-center gap-3">
-                                            <x-admin.button variant="link" href="{{ route('admin.cinemas.edit', $cinema) }}">Edit</x-admin.button>
-                                            <form action="{{ route('admin.cinemas.destroy', $cinema) }}" method="POST"
-                                                  onsubmit="return confirm('Yakin hapus bioskop &quot;{{ $cinema->name }}&quot;? Semua jadwal terkait ikut terhapus.')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <x-admin.button type="submit" variant="danger">Hapus</x-admin.button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="p-10 text-center text-gray-500">
-                                        Belum ada data bioskop. Klik <span class="text-[#E50914]">"+ Tambah Bioskop"</span> untuk mulai menambahkan.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-4 [&_button]:text-gray-300 [&_span]:text-gray-500">
-                    {{ $cinemas->links() }}
-                </div>
-            </x-admin.card>
-        </div>
+@section('content')
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-white">Manajemen Jadwal Tayang</h2>
+        <p class="text-ticketor-gray text-sm mt-1">Atur penayangan film pada studio XXI, CGV, dan Cinepolis.</p>
     </div>
-</x-app-layout>
+    <a href="{{ route('admin.schedules.create') }}" class="bg-ticketor-neon text-black px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Tambah Jadwal
+    </a>
+</div>
+
+@if(session('success'))
+<div class="mb-6 bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg">
+    {{ session('success') }}
+</div>
+@endif
+
+<div class="bg-ticketor-card rounded-xl border border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-800/30 text-ticketor-gray border-b border-gray-800">
+                    <th class="py-4 px-6 font-medium">Film</th>
+                    <th class="py-4 px-6 font-medium">Studio / Cinema</th>
+                    <th class="py-4 px-6 font-medium">Waktu Tayang</th>
+                    <th class="py-4 px-6 font-medium">Harga Tiket</th>
+                    <th class="py-4 px-6 font-medium text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-white">
+                @forelse($schedules as $schedule)
+                <tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
+                    <td class="py-4 px-6 font-semibold">{{ $schedule->movie->title }}</td>
+                    <td class="py-4 px-6">
+                        <span class="bg-gray-800 text-ticketor-neon border border-gray-700 px-2.5 py-1 rounded-md text-xs font-semibold">
+                            {{ $schedule->studio->name ?? '-' }} · {{ $schedule->cinema->name }}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6">
+                        {{ \Carbon\Carbon::parse($schedule->start_time)->format('d M Y - H:i') }} WIB
+                    </td>
+                    <td class="py-4 px-6 font-medium text-ticketor-neon">
+                        Rp {{ number_format($schedule->price, 0, ',', '.') }}
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <form action="{{ route('admin.schedules.destroy', $schedule) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus jadwal ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-500 hover:text-red-400 transition">Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-ticketor-gray">
+                        Belum ada jadwal tayang yang dikonfigurasi.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+@endsection

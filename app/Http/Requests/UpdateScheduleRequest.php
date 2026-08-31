@@ -16,16 +16,23 @@ class UpdateScheduleRequest extends FormRequest
     public function rules(): array {
         return [
             'movie_id' => ['required', 'exists:movies,id'],
-            'cinema_id' => ['required', 'exists:cinemas,id'],
+            'studio_id' => ['required', 'exists:studios,id'],
             'show_date' => ['required', 'date'],
             'show_time' => ['required', 'date_format:H:i'],
             'price' => ['required', 'numeric', 'min:0'],
         ];
     }
 
+    public function messages(): array {
+        return [
+            'studio_id.required' => 'Studio wajib dipilih.',
+            'studio_id.exists' => 'Studio yang dipilih tidak valid.',
+        ];
+    }
+
     public function withValidator($validator): void {
         $validator->after(function ($validator) {
-            if (! $this->filled(['movie_id', 'cinema_id', 'show_date', 'show_time'])) {
+            if (! $this->filled(['movie_id', 'studio_id', 'show_date', 'show_time'])) {
                 return;
             }
 

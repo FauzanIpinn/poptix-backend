@@ -7,36 +7,29 @@ use App\Models\User;
 
 class BookingPolicy
 {
-    public function viewAny(User $user): bool
-    {
+    public function viewAny(User $user): bool {
         return $user->hasRole('user');
     }
 
-    public function view(User $user, Booking $booking): bool
-    {
-        // User hanya bisa melihat booking miliknya sendiri.
-        // Admin bisa melihat semua booking.
+    public function view(User $user, Booking $booking): bool {
         return $user->id === $booking->user_id || $user->hasRole('admin');
     }
 
-    public function create(User $user): bool
-    {
+    public function create(User $user): bool {
         return $user->hasRole('user');
     }
 
-    public function update(User $user, Booking $booking): bool
-    {
-        // Update booking hanya boleh dilakukan oleh pemiliknya
-        // dan hanya saat status masih pending.
+    public function update(User $user, Booking $booking): bool {
         return $user->id === $booking->user_id
             && $booking->status === 'pending';
     }
 
-    public function cancel(User $user, Booking $booking): bool
-    {
-        // Cancel hanya boleh jika:
-        // 1. Booking ini memang miliknya sendiri
-        // 2. Status booking-nya masih 'pending' (belum dibayar)
+    public function cancel(User $user, Booking $booking): bool {
+        return $user->id === $booking->user_id
+            && $booking->status === 'pending';
+    }
+
+    public function pay(User $user, Booking $booking): bool {
         return $user->id === $booking->user_id
             && $booking->status === 'pending';
     }
