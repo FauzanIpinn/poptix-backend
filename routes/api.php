@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\CinemaController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\PaymentNotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register-attempts');
@@ -18,7 +20,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+    Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->middleware('throttle:booking-attempts');
 });
+
+Route::post('payment/notification', [PaymentNotificationController::class, 'handle']);
 
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);

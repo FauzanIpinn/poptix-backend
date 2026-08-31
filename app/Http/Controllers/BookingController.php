@@ -2,32 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BookingException;
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
-use App\Models\BookingSeat;
 use App\Models\Schedule;
-use App\Models\Seat;
 use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use RuntimeException;
 
 class BookingController extends Controller
 {
-    public function showSeats(Schedule $schedule): View {
-        $schedule->load(['movie', 'cinema.seats']);
-
-        $bookedSeatIds = BookingSeat::where('schedule_id', $schedule->id)
-            ->whereHas('booking', function ($query) {
-                $query->whereIn('status', ['pending', 'paid']);
-            })
-            ->pluck('seat_id')
-            ->toArray();
-
-        return view('schedules.seats', compact('schedule', 'bookedSeatIds'));
-    }
-
     public function __construct(protected BookingService $bookingService) {}
+
+    public function showSeats(Schedule $schedule): View {
+        $schedule->load(['movie', 'studio.cinema']);
+
+        $seats = $this->bookingService->getAvailableSeats($schedule);
+
+        return view('schedules.seats', compact('schedule', 'seats'));
+    }
 
     public function store(StoreBookingRequest $request): RedirectResponse {
         $validated = $request->validated();
@@ -39,25 +32,27 @@ class BookingController extends Controller
                 $validated['seat_ids'],
                 $validated['idempotency_key'] ?? null,
             );
-        } catch (RuntimeException $e) {
+        } catch (BookingException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('bookings.show', $booking)
-            ->with('success', 'Booking berhasil dibuat! Selesaikan pembayaran dalam 15 menit.');
+        return redirect()->route('bookings.show', $booking)->with(
+            'success',
+            'Booking berhasil dibuat! Selesaikan pembayaran dalam ' . config('booking.reservation_ttl_minutes') . ' menit.'
+        );
     }
 
     public function show(Booking $booking): View {
         $this->authorize('view', $booking);
 
-        $booking->load(['schedule.movie', 'schedule.cinema', 'bookingSeats.seat']);
+        $booking->load(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat']);
 
         return view('bookings.show', compact('booking'));
     }
 
     public function myBookings(): View {
         $bookings = Booking::where('user_id', auth()->id())
-            ->with(['schedule.movie', 'schedule.cinema'])
+            ->with(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat'])
             ->latest()
             ->paginate(10);
 

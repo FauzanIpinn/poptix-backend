@@ -4,9 +4,9 @@ use App\Http\Controllers\Admin\CinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MovieController;
 use App\Http\Controllers\Admin\ScheduleController;
-use App\Http\Controllers\BookingController;              // <-- controller WEB (return View)
-use App\Http\Controllers\MovieCatalogController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\BookingController;            
+use App\Http\Controllers\MovieCatalogController;
 use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;

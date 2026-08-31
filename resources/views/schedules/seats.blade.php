@@ -16,7 +16,7 @@
                 <div class="mb-6">
                     <h3 class="text-lg font-bold">{{ $schedule->movie->title }}</h3>
                     <p class="text-gray-600">
-                        {{ $schedule->cinema->name }} ({{ $schedule->cinema->brand }}) —
+                        {{ $schedule->studio->cinema->name }} ({{ $schedule->studio->cinema->brand }}) — {{ $schedule->studio->name }} —
                         {{ $schedule->show_date->format('d M Y') }},
                         {{ \Illuminate\Support\Carbon::parse($schedule->show_time)->format('H:i') }}
                     </p>
@@ -35,11 +35,11 @@
 
                     <div class="mb-6 text-center bg-gray-100 py-2 rounded text-sm text-gray-500">LAYAR</div>
 
-                    @foreach ($schedule->cinema->seats->groupBy('row') as $row => $seatsInRow)
+                    @foreach ($seats->groupBy('row') as $row => $seatsInRow)
                         <div class="flex items-center gap-2 mb-2">
                             <span class="w-6 font-bold">{{ $row }}</span>
                             @foreach ($seatsInRow->sortBy('number') as $seat)
-                                @php $isBooked = in_array($seat->id, $bookedSeatIds); @endphp
+                                @php $isBooked = $seat->is_booked; @endphp
                                 <label class="cursor-pointer {{ $isBooked ? 'cursor-not-allowed' : '' }}">
                                     <input
                                         type="checkbox"

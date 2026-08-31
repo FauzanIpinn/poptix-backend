@@ -8,11 +8,6 @@ use Illuminate\Support\Carbon;
 
 class ScheduleResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -22,13 +17,12 @@ class ScheduleResource extends JsonResource
             'price'           => (float) $this->price,
             'price_formatted' => 'Rp' . number_format($this->price, 0, ',', '.'),
 
-            // Jumlah kursi tersedia — hanya muncul jika di-withCount('availableSeats') atau sejenisnya
             'available_seats_count' => $this->whenNotNull(
                 $this->available_seats_count ?? null
             ),
 
-            // Relasi — hanya di-include jika sudah di-eager load
             'movie'  => new MovieResource($this->whenLoaded('movie')),
+            'studio' => new StudioResource($this->whenLoaded('studio')),
             'cinema' => new CinemaResource($this->whenLoaded('cinema')),
         ];
     }

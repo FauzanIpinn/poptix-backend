@@ -20,6 +20,7 @@ class CinemaResource extends JsonResource
             'brand' => $this->brand,
             'city' => $this->city,
             'address' => $this->address,
+            'studio' => StudioResource::collection($this->whenLoaded('studios')),
         ];
     }
 }
