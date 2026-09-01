@@ -42,7 +42,7 @@ class Schedule extends Model
 
     public function studio(): BelongsTo {
         return $this->belongsTo(Studio::class);
-    }
+    }   
 
     public function cinema(): BelongsTo {
         return $this->belongsTo(Cinema::class);
@@ -57,7 +57,8 @@ class Schedule extends Model
     }
     
     public function availableSeatsCount(): int {
-        $totalSeats = $this->cinema()->withCount('seats')->first()->seats_count ?? 0;
+        $totalSeats = $this->studio()->withCount('seats')->first()->seats_count ?? 0;
+
 
         $bookedSeats = $this->bookingSeats()
             ->whereHas('booking', fn ($q) => $q->active())

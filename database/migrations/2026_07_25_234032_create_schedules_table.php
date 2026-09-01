@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('schedules', function (Blueprint $table) {
@@ -18,18 +15,12 @@ return new class extends Migration
             $table->date('show_date');
             $table->time('show_time');
             $table->decimal('price', 10, 2);
-            $table->foreignId('studio_id')->after('cinema_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void {
-        Schema::table('schedules', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('studio_id');
-        });
+    public function down(): void
+    {
         Schema::dropIfExists('schedules');
     }
 };

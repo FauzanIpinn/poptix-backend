@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BookingController;            
 use App\Http\Controllers\MovieCatalogController;
-use App\Http\Controllers\PaymentNotificationController;
+use App\Http\Controllers\Api\PaymentNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use Illuminate\Support\Facades\Route;

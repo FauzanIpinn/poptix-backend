@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\PaymentNotificationController;
+use App\Http\Controllers\Api\PaymentNotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register-attempts');

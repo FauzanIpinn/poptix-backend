@@ -47,19 +47,18 @@ class UpdateScheduleRequest extends FormRequest
             $newEnd = $newStart->copy()->addMinutes($movie->duration + 30);
 
             $overlapping = Schedule::with('movie')
-                ->where('cinema_id', $this->cinema_id)
+                ->where('studio_id', $this->studio_id)
                 ->where('id', '!=', $currentScheduleId)
                 ->whereDate('show_date', $newStart->toDateString())
                 ->get()
                 ->contains(function (Schedule $schedule) use ($newStart, $newEnd) {
                     $existingStart = Carbon::parse($schedule->show_date->format('Y-m-d') . ' ' . $schedule->show_time);
                     $existingEnd = $existingStart->copy()->addMinutes(($schedule->movie->duration ?? 0) + 30);
-
                     return $newStart->lt($existingEnd) && $newEnd->gt($existingStart);
-                });
+                }); 
 
             if ($overlapping) {
-                $validator->errors()->add('show_time', 'Jadwal ini bentrok dengan jadwal film lain di bioskop yang sama.');
+                $validator->errors()->add('show_time', 'Jadwal ini bentrok dengan jadwal film lain di studio yang sama.');
             }
         });
     }

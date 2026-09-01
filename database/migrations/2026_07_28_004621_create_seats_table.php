@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('number'); // 1, 2, 3, dst
             $table->timestamps();
 
-            $table->unique(['cinema_id', 'row', 'number']); // ga boleh ada kursi duplikat di bioskop yang sama
+            $table->unique(['cinema_id', 'row', 'number']); 
         });
     }
 

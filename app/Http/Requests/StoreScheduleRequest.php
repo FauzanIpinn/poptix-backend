@@ -17,7 +17,6 @@ class StoreScheduleRequest extends FormRequest
         return [
             'movie_id' => ['required', 'exists:movies,id'],
             'studio_id' => ['required', 'exists:studios,id'],
-            'cinema_id' => ['required', 'exists:cinemas,id'],
             'show_date' => ['required', 'date', 'after_or_equal:today'],
             'show_time' => ['required', 'date_format:H:i'],
             'price' => ['required', 'numeric', 'min:0'],
@@ -30,10 +29,10 @@ class StoreScheduleRequest extends FormRequest
             'studio_id.exists' => 'Studio yang dipilih tidak valid.',
         ];
     }
-
+    
     public function withValidator($validator): void {
         $validator->after(function ($validator) {
-            if (! $this->filled(['movie_id', 'cinema_id', 'show_date', 'show_time'])) {
+            if (! $this->filled(['movie_id', 'studio_id', 'show_date', 'show_time'])) {
                 return;
             }
 
@@ -46,7 +45,7 @@ class StoreScheduleRequest extends FormRequest
             $newEnd = $newStart->copy()->addMinutes($movie->duration + 30);
 
             $overlapping = Schedule::with('movie')
-                ->where('cinema_id', $this->cinema_id)
+                ->where('studio_id', $this->studio_id)
                 ->whereDate('show_date', $newStart->toDateString())
                 ->get()
                 ->contains(function (Schedule $schedule) use ($newStart, $newEnd) {
@@ -57,7 +56,7 @@ class StoreScheduleRequest extends FormRequest
                 });
 
             if ($overlapping) {
-                $validator->errors()->add('show_time', 'Jadwal ini bentrok dengan jadwal film lain di bioskop yang sama.');
+                $validator->errors()->add('show_time', 'Jadwal ini bentrok dengan jadwal lain di studio yang sama.');
             }
         });
     }

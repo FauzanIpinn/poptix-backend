@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Attribute;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,5 +32,12 @@ class Seat extends Model
 
     public function studio(): BelongsTo {
         return $this->belongsTo(Studio::class);
+    }
+
+    protected function code(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => "{$this->row}{$this->number}"
+        );
     }
 }

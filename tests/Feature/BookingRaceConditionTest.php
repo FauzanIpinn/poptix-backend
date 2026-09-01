@@ -13,15 +13,23 @@ class BookingRaceConditionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dua_user_tidak_bisa_booking_kursi_yang_sama(): void {
-        $movie = Movie::factory()->create();
-        $cinema = Cinema::factory()->create(); // observer otomatis bikin kursi
-        $schedule = Schedule::factory()->create([
+    protected function createScheduleWithCinema(array $scheduleOverrides = []): array {
+        $movie = Movie::factory()->create(['duration' => 120]);
+        $cinema = Cinema::factory()->create();
+        $studio = $cinema->studios()->first();
+
+        $schedule = Schedule::factory()->create(array_merge([
             'movie_id' => $movie->id,
-            'cinema_id' => $cinema->id,
+            'studio_id' => $studio->id,
             'price' => 50000,
-        ]);
-        $seat = $cinema->seats()->first();
+        ], $scheduleOverrides));
+
+        return [$cinema, $studio, $schedule];
+    }
+
+    public function test_dua_user_tidak_bisa_booking_kursi_yang_sama(): void {
+        [$cinema, $studio, $schedule] = $this->createScheduleWithCinema();
+        $seat = $studio->seats()->first();
 
         $userA = User::factory()->create();
         $userA->assignRole('user');
@@ -42,14 +50,8 @@ class BookingRaceConditionTest extends TestCase
     }
 
     public function test_booking_yang_dibatalkan_bisa_dipesan_ulang(): void {
-        $movie = Movie::factory()->create();
-        $cinema = Cinema::factory()->create();
-        $schedule = Schedule::factory()->create([
-            'movie_id' => $movie->id,
-            'cinema_id' => $cinema->id,
-            'price' => 50000,
-        ]);
-        $seat = $cinema->seats()->first();
+        [$cinema, $studio, $schedule] = $this->createScheduleWithCinema();
+        $seat = $studio->seats()->first();
 
         $user = User::factory()->create();
         $user->assignRole('user');
@@ -68,18 +70,12 @@ class BookingRaceConditionTest extends TestCase
         $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$seat->id],
-        ])->assertStatus(201); // regression test untuk fix constraint unique
+        ])->assertStatus(201);
     }
 
     public function test_double_submit_dengan_idempotency_key_tidak_duplikat(): void {
-        $movie = Movie::factory()->create();
-        $cinema = Cinema::factory()->create();
-        $schedule = Schedule::factory()->create([
-            'movie_id' => $movie->id,
-            'cinema_id' => $cinema->id,
-            'price' => 50000,
-        ]);
-        $seat = $cinema->seats()->first();
+        [$cinema, $studio, $schedule] = $this->createScheduleWithCinema();
+        $seat = $studio->seats()->first();
 
         $user = User::factory()->create();
         $user->assignRole('user');
@@ -93,6 +89,22 @@ class BookingRaceConditionTest extends TestCase
         $this->actingAs($user, 'sanctum')->postJson('/api/bookings', $payload)->assertStatus(201);
         $this->actingAs($user, 'sanctum')->postJson('/api/bookings', $payload)->assertStatus(201);
 
-        $this->assertDatabaseCount('bookings', 1); // bukan 2
+        $this->assertDatabaseCount('bookings', 1);
+    }
+
+    public function test_kursi_dari_studio_lain_ditolak(): void {
+        [, , $schedule] = $this->createScheduleWithCinema();
+
+        $otherCinema = Cinema::factory()->create();
+        $foreignSeat = $otherCinema->studios()->first()->seats()->first();
+
+        $user = User::factory()->create();
+        $user->assignRole('user');
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
+            'schedule_id' => $schedule->id,
+            'seat_ids' => [$foreignSeat->id],
+        ])->assertStatus(422)
+          ->assertJsonValidationErrors('seat_ids');
     }
 }
