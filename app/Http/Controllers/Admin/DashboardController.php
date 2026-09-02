@@ -12,13 +12,13 @@ use Illuminate\View\View;
 class DashboardController extends Controller
 {
     public function index() {
-        $todayTickets = Booking::whereDate('created_at', Carbon::today())
-            ->where('payment_status', 'success')
+        $todayTickets = Booking::whereDate('paid_at', Carbon::today())
+            ->where('status', 'paid')
             ->count();
 
-        $monthlyRevenue = Booking::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->where('payment_status', 'success')
+        $monthlyRevenue = Booking::whereMonth('paid_at', Carbon::now()->month)
+            ->whereYear('paid_at', Carbon::now()->year)
+            ->where('status', 'paid')
             ->sum('total_price');
 
         $activeMovies = Movie::count();

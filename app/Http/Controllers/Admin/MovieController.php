@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMovieRequest;
 use App\Http\Requests\UpdateMovieRequest;
+use App\Http\Traits\UploadsPoster;
 use App\Models\Movie;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class MovieController extends Controller
 {
+    use UploadsPoster;
+
     public function index(): View {
         $movies = Movie::latest()->paginate(10);
         return view('admin.movies.index', compact('movies'));
@@ -23,8 +26,7 @@ class MovieController extends Controller
     public function store(StoreMovieRequest $request): RedirectResponse {
         $validated = $request->validated();
         if ($request->hasFile('poster')) {
-            $result = cloudinary()->uploadApi()->upload($request->file('poster')->getRealPath(), ['folder' => 'poptix/posters']);
-            $validated['poster'] = $result['secure_url'];
+            $validated['poster'] = $this->uploadPoster($request->file('poster'));
         }
 
         Movie::create($validated);
@@ -36,8 +38,7 @@ class MovieController extends Controller
     public function update(UpdateMovieRequest $request, Movie $movie): RedirectResponse {
         $validated = $request->validated();
         if ($request->hasFile('poster')) {
-            $result = cloudinary()->uploadApi()->upload($request->file('poster')->getRealPath(), ['folder' => 'poptix/posters']);
-            $validated['poster'] = $result['secure_url'];
+            $validated['poster'] = $this->uploadPoster($request->file('poster'));
         }
 
         $movie->update($validated);

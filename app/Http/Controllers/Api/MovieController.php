@@ -10,15 +10,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class MovieController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
-    {
+    public function index(Request $request): AnonymousResourceCollection {
         $query = Movie::query();
 
-        if ($request->has('status') && in_array($request->status, ['now_showing', 'coming_soon'])) {
+        if ($request->filled('status') && in_array($request->status, ['now_showing', 'coming_soon'])) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
@@ -27,8 +26,7 @@ class MovieController extends Controller
         return MovieResource::collection($movies);
     }
 
-    public function show(Movie $movie): MovieResource
-    {
+    public function show(Movie $movie): MovieResource {
         return new MovieResource($movie);
     }
 }

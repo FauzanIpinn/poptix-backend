@@ -16,8 +16,7 @@ class AuthController extends Controller
     /**
      * Mendaftarkan pengguna baru dan mengembalikan token akses.
      */
-    public function register(StoreRegisterRequest $request): JsonResponse
-    {
+    public function register(StoreRegisterRequest $request): JsonResponse {
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
@@ -36,8 +35,7 @@ class AuthController extends Controller
     }
 
     
-    public function login(StoreLoginRequest $request): JsonResponse
-    {
+    public function login(StoreLoginRequest $request): JsonResponse {
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
@@ -58,8 +56,7 @@ class AuthController extends Controller
     /**
      * Menghapus token akses pengguna yang sedang login.
      */
-    public function logout(Request $request): JsonResponse
-    {
+    public function logout(Request $request): JsonResponse {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logout berhasil.']);
@@ -68,8 +65,7 @@ class AuthController extends Controller
     /**
      * Mengembalikan data profil pengguna yang sedang login.
      */
-    public function me(Request $request): JsonResponse
-    {
+    public function me(Request $request): JsonResponse {
         return response()->json([
             'user' => new UserResource($request->user()->load('roles')),
         ]);

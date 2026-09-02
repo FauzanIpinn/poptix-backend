@@ -9,12 +9,15 @@ use App\Http\Resources\BookingResource;
 use App\Http\Resources\SeatResource;
 use App\Models\Booking;
 use App\Models\Schedule;
+use App\Http\Traits\ApiResponse;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BookingController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected BookingService $bookingService) {}
 
     public function availableSeats(Schedule $schedule): AnonymousResourceCollection {
@@ -32,15 +35,12 @@ class BookingController extends Controller
                 $validated['idempotency_key'] ?? null,
             );
         } catch (BookingException $e) {
-            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+            return $this->error($e->getMessage(), $e->statusCode());
         }
 
         $booking->load(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat']);
 
-        return response()->json([
-            'message' => 'Booking berhasil dibuat.',
-            'data' => new BookingResource($booking),
-        ], 201);
+        return $this->success('Booking berhasil dibuat.', new BookingResource($booking), 201);
     }
 
     public function index(): AnonymousResourceCollection {
@@ -53,21 +53,18 @@ class BookingController extends Controller
         return BookingResource::collection($bookings);
     }
 
-    public function show(Booking $booking): BookingResource {
+    public function show(Booking $booking): JsonResponse {
         $this->authorize('view', $booking);
 
         $booking->load(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat']);
 
-        return new BookingResource($booking);
+        return $this->success('Detail booking berhasil diambil.', new BookingResource($booking));
     }
 
     public function cancel(Booking $booking): JsonResponse {
         $this->authorize('cancel', $booking);
         $booking = $this->bookingService->cancelBooking($booking);
 
-        return response()->json([
-            'message' => 'Booking berhasil dibatalkan.',
-            'data' => new BookingResource($booking),
-        ]);
+        return $this->success('Booking berhasil dibatalkan.', new BookingResource($booking));
     }
 }

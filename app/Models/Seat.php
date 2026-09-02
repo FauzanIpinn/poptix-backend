@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Seat extends Model
 {
@@ -32,6 +33,10 @@ class Seat extends Model
 
     public function studio(): BelongsTo {
         return $this->belongsTo(Studio::class);
+    }
+
+    public function bookingSeats(): HasMany {
+        return $this->hasMany(BookingSeat::class);
     }
 
     protected function code(): Attribute

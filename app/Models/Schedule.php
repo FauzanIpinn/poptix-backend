@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Schedule extends Model
 {
     use HasFactory;
+
+    protected $appends = ['available_seats_count'];
 
     protected $fillable = [
         'movie_id',
@@ -56,14 +59,27 @@ class Schedule extends Model
         return $this->hasMany(BookingSeat::class);
     }
     
-    public function availableSeatsCount(): int {
-        $totalSeats = $this->studio()->withCount('seats')->first()->seats_count ?? 0;
+    protected function availableSeatsCount(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $totalSeats = \Illuminate\Support\Facades\Cache::remember(
+                    "studio:{$this->studio_id}:seats-count",
+                    now()->addHours(6),
+                    fn () => $this->studio()->withCount('seats')->first()->seats_count ?? 0
+                );
 
+                $bookedSeats = \Illuminate\Support\Facades\Cache::remember(
+                    "schedule:{$this->id}:booked-seat-ids",
+                    now()->addSeconds(10),
+                    fn () => $this->bookingSeats()
+                        ->whereHas('booking', fn ($q) => $q->active())
+                        ->pluck('seat_id')
+                        ->all()
+                );
 
-        $bookedSeats = $this->bookingSeats()
-            ->whereHas('booking', fn ($q) => $q->active())
-            ->count();
-
-        return max(0, $totalSeats - $bookedSeats);
+                return max(0, $totalSeats - count($bookedSeats));
+            }
+        );
     }
 }

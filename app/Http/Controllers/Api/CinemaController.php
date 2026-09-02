@@ -10,15 +10,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CinemaController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
-    {
+    public function index(Request $request): AnonymousResourceCollection {
         $query = Cinema::query();
 
-        if ($request->has('brand')) {
+        if ($request->filled('brand')) {
             $query->brand($request->brand); // scope yang udah dibuat di Tahap 3
         }
 
-        if ($request->has('city')) {
+        if ($request->filled('city')) {
             $query->city($request->city); // scope yang udah dibuat di Tahap 3
         }
 
@@ -27,8 +26,7 @@ class CinemaController extends Controller
         return CinemaResource::collection($cinemas);
     }
 
-    public function show(Cinema $cinema): CinemaResource
-    {
+    public function show(Cinema $cinema): CinemaResource {
         return new CinemaResource($cinema);
     }
 }

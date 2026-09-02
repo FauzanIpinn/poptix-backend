@@ -10,19 +10,18 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ScheduleController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
-    {
+    public function index(Request $request): AnonymousResourceCollection {
         $query = Schedule::with(['movie', 'cinema']);
 
-        if ($request->has('movie_id')) {
+        if ($request->filled('movie_id')) {
             $query->where('movie_id', $request->movie_id);
         }
 
-        if ($request->has('cinema_id')) {
+        if ($request->filled('cinema_id')) {
             $query->where('cinema_id', $request->cinema_id);
         }
 
-        if ($request->has('date')) {
+        if ($request->filled('date')) {
             $query->whereDate('show_date', $request->date);
         }
 
@@ -31,8 +30,7 @@ class ScheduleController extends Controller
         return ScheduleResource::collection($schedules);
     }
 
-    public function show(Schedule $schedule): ScheduleResource
-    {
+    public function show(Schedule $schedule): ScheduleResource {
         $schedule->load(['movie', 'cinema']);
 
         return new ScheduleResource($schedule);
