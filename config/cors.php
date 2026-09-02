@@ -5,7 +5,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('FRONTEND_URLS', 'http://localhost:5173')),
+    'allowed_origins' => explode(',', env('FRONTEND_URLS', 'http://localhost:3000')),
 
     'allowed_origins_patterns' => [],
 

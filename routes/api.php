@@ -32,7 +32,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
     Route::apiResource('movies', AdminMovieController::class);
     Route::apiResource('cinemas', AdminCinemaController::class);
     Route::apiResource('schedules', AdminScheduleController::class);
-    Route::apiResource('studios', AdminStudioController::class)->except(['create', 'edit']);
+    Route::apiResource('studios', AdminStudioController::class);
     Route::get('studios/{studio}/seats', [AdminSeatController::class, 'index']);
     Route::post('studios/{studio}/seats/generate', [AdminSeatController::class, 'generate']);
     Route::delete('seats/{seat}', [AdminSeatController::class, 'destroy']);

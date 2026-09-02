@@ -12,8 +12,6 @@ class Schedule extends Model
 {
     use HasFactory;
 
-    protected $appends = ['available_seats_count'];
-
     protected $fillable = [
         'movie_id',
         'studio_id',

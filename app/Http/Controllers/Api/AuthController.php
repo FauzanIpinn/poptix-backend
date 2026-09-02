@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLoginRequest;
 use App\Http\Requests\StoreRegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Http\Traits\ApiResponse;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,9 +14,8 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Mendaftarkan pengguna baru dan mengembalikan token akses.
-     */
+    use ApiResponse;
+
     public function register(StoreRegisterRequest $request): JsonResponse {
         $user = User::create([
             'name'     => $request->name,
@@ -27,46 +27,35 @@ class AuthController extends Controller
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Registrasi berhasil.',
-            'user'    => new UserResource($user),
-            'token'   => $token,
+        return $this->success('Registrasi berhasil.', [
+            'user'  => new UserResource($user),
+            'token' => $token,
         ], 201);
     }
 
-    
     public function login(StoreLoginRequest $request): JsonResponse {
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Email atau password salah.',
-            ], 401);
+            return $this->error('Email atau password salah.', 401);
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Login berhasil.',
-            'user'    => new UserResource($user),
-            'token'   => $token,
-        ], 200);
+        return $this->success('Login berhasil.', [
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ]);
     }
 
-    /**
-     * Menghapus token akses pengguna yang sedang login.
-     */
     public function logout(Request $request): JsonResponse {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logout berhasil.']);
+        return $this->success('Logout berhasil.');
     }
 
-    /**
-     * Mengembalikan data profil pengguna yang sedang login.
-     */
     public function me(Request $request): JsonResponse {
-        return response()->json([
+        return $this->success('Profil berhasil diambil.', [
             'user' => new UserResource($request->user()->load('roles')),
         ]);
     }
