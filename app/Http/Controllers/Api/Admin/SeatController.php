@@ -9,23 +9,19 @@ use App\Http\Traits\ApiResponse;
 use App\Models\Seat;
 use App\Models\Studio;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SeatController extends Controller
 {
     use ApiResponse;
 
-    public function index(Studio $studio): JsonResponse
-    {
+    public function index(Studio $studio): AnonymousResourceCollection {
         $seats = $studio->seats()->orderBy('row')->orderBy('number')->get();
 
-        return $this->success('Daftar kursi berhasil diambil.', SeatResource::collection($seats)->resolve());
+        return SeatResource::collection($seats);
     }
 
-    /**
-     * Generate kursi baru untuk sebuah studio (menambah baris kursi tanpa mengganggu kursi lama).
-     */
-    public function generate(GenerateSeatsRequest $request, Studio $studio): JsonResponse
-    {
+    public function generate(GenerateSeatsRequest $request, Studio $studio): JsonResponse {
         $validated = $request->validated();
 
         $existing = $studio->seats()
@@ -54,11 +50,10 @@ class SeatController extends Controller
 
         $seats = $studio->seats()->orderBy('row')->orderBy('number')->get();
 
-        return $this->success('Kursi berhasil ditambahkan.', SeatResource::collection($seats)->resolve(), 201);
+        return $this->success('Kursi berhasil ditambahkan.', SeatResource::collection($seats), 201);
     }
 
-    public function destroy(Seat $seat): JsonResponse
-    {
+    public function destroy(Seat $seat): JsonResponse {
         $this->authorize('delete', $seat);
 
         $seat->delete();
