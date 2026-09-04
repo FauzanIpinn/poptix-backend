@@ -56,6 +56,17 @@ class Schedule extends Model
     public function bookingSeats(): HasMany {
         return $this->hasMany(BookingSeat::class);
     }
+
+    /**
+     * Waktu mulai tayang sebagai satu instance Carbon (gabungan show_date + show_time).
+     */
+    public function startsAt(): \Carbon\Carbon {
+        return \Carbon\Carbon::parse($this->show_date->format('Y-m-d') . ' ' . $this->show_time);
+    }
+
+    public function hasStarted(): bool {
+        return $this->startsAt()->isPast();
+    }
     
     protected function availableSeatsCount(): Attribute
     {

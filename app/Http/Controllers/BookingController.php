@@ -20,7 +20,7 @@ class BookingController extends Controller
         $seats = $this->bookingService->getAvailableSeats($schedule);
 
         return view('schedules.seats', compact('schedule', 'seats'));
-    }
+    } 
 
     public function store(StoreBookingRequest $request): RedirectResponse {
         $validated = $request->validated();

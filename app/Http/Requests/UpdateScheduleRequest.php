@@ -17,9 +17,9 @@ class UpdateScheduleRequest extends FormRequest
         return [
             'movie_id' => ['required', 'exists:movies,id'],
             'studio_id' => ['required', 'exists:studios,id'],
-            'show_date' => ['required', 'date'],
+            'show_date' => ['required', 'date', 'after_or_equal:today'],
             'show_time' => ['required', 'date_format:H:i'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['required', 'numeric', 'min:0', 'max:10000000', 'decimal:0,2'],
         ];
     }
 

@@ -59,4 +59,16 @@ class AuthController extends Controller
             'user' => new UserResource($request->user()->load('roles')),
         ]);
     }
+
+    public function refresh(Request $request): JsonResponse {
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return $this->success('Token berhasil diperpanjang.', [
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ]);
+    }
 }

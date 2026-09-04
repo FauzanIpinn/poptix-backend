@@ -18,7 +18,7 @@ class StoreStudioRequest extends FormRequest
             'cinema_id'     => ['required', 'exists:cinemas,id'],
             'name'          => ['required', 'string', 'max:100'],
             'rows'          => ['nullable', 'array'],
-            'rows.*'        => ['string', 'max:1'],
+            'rows.*'        => ['distinct', 'string', 'max:1'],
             'seats_per_row' => ['nullable', 'integer', 'min:1', 'max:50'],
         ];
     }
@@ -29,6 +29,7 @@ class StoreStudioRequest extends FormRequest
             'cinema_id.required' => 'Bioskop wajib dipilih.',
             'cinema_id.exists'   => 'Bioskop yang dipilih tidak valid.',
             'name.required'      => 'Nama studio wajib diisi.',
+            'rows.*.distinct'    => 'Nama baris kursi tidak boleh ada yang duplikat.',
         ];
     }
 }

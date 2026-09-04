@@ -47,7 +47,7 @@ class PaymentNotificationTest extends TestCase
         ];
         $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
 
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(200);
 
         $fresh = $booking->fresh();
         $this->assertEquals('paid', $fresh->status->value ?? $fresh->status);
@@ -65,10 +65,54 @@ class PaymentNotificationTest extends TestCase
             'signature_key' => 'signature-palsu',
         ];
 
-        $this->postJson('/payment/notification', $payload)->assertStatus(403);
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(403);
 
         $fresh = $booking->fresh();
         $this->assertEquals('pending', $fresh->status->value ?? $fresh->status);
+    }
+
+    public function test_notifikasi_untuk_booking_yang_sudah_expired_ditolak(): void {
+        $booking = $this->makeBooking();
+        $booking->update(['status' => 'expired']);
+
+        $payload = [
+            'order_id' => $booking->midtrans_order_id,
+            'status_code' => '200',
+            'gross_amount' => '50000.00',
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'payment_type' => 'gopay',
+        ];
+        $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
+
+        // Notifikasi telat masuk setelah booking sudah expired (mis. seat sudah
+        // dilepas & mungkin sudah dipesan orang lain) -- TIDAK BOLEH otomatis
+        // dibalik jadi 'paid'.
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(409);
+
+        $fresh = $booking->fresh();
+        $this->assertEquals('expired', $fresh->status->value ?? $fresh->status);
+        $this->assertNull($fresh->paid_at);
+    }
+
+    public function test_notifikasi_untuk_booking_yang_sudah_cancelled_ditolak(): void {
+        $booking = $this->makeBooking();
+        $booking->update(['status' => 'cancelled']);
+
+        $payload = [
+            'order_id' => $booking->midtrans_order_id,
+            'status_code' => '200',
+            'gross_amount' => '50000.00',
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'payment_type' => 'gopay',
+        ];
+        $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
+
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(409);
+
+        $fresh = $booking->fresh();
+        $this->assertEquals('cancelled', $fresh->status->value ?? $fresh->status);
     }
 
     public function test_notifikasi_duplikat_tidak_diproses_ulang(): void {
@@ -84,10 +128,10 @@ class PaymentNotificationTest extends TestCase
         ];
         $payload['signature_key'] = $this->signature($payload['order_id'], $payload['status_code'], $payload['gross_amount']);
 
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(200);
         $paidAtFirst = $booking->fresh()->paid_at;
 
-        $this->postJson('/payment/notification', $payload)->assertStatus(200);
+        $this->postJson('/api/v1/payment/notification', $payload)->assertStatus(200);
         $paidAtSecond = $booking->fresh()->paid_at;
 
         $this->assertTrue($paidAtFirst->eq($paidAtSecond));

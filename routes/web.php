@@ -7,7 +7,6 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BookingController;            
 use App\Http\Controllers\MovieCatalogController;
-use App\Http\Controllers\Api\PaymentNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -46,7 +45,5 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->name('bookings.checkout');
 });
-
-Route::post('/payment/notification', [PaymentNotificationController::class, 'handle'])->name('payment.notification');
 
 require __DIR__ . '/auth.php';

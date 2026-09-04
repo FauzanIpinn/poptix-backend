@@ -54,6 +54,10 @@ class BookingService
         $booking = DB::transaction(function () use ($user, $scheduleId, $seatIds) {
             $schedule = Schedule::findOrFail($scheduleId);
 
+            if ($schedule->hasStarted()) {
+                throw BookingException::scheduleAlreadyStarted();
+            }
+
             $seats = Seat::whereIn('id', $seatIds)->lockForUpdate()->get();
 
             if ($seats->count() !== count($seatIds)) {
@@ -110,6 +114,13 @@ class BookingService
     }
 
     public function cancelBooking(Booking $booking): Booking {
+        // Defense-in-depth: guard status juga di sini, bukan cuma di Policy layer,
+        // supaya Service ini tetap aman kalau nanti dipanggil dari jalur lain
+        // (mis. fitur admin bulk-cancel) yang mungkin lewat Policy berbeda.
+        if ($booking->status !== 'pending') {
+            throw BookingException::notPending();
+        }
+
         $booking->update(['status' => 'cancelled']);
         $this->forgetBookedSeatsCache($booking->schedule_id);
 

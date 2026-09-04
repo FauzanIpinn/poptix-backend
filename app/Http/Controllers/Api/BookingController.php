@@ -63,7 +63,12 @@ class BookingController extends Controller
 
     public function cancel(Booking $booking): JsonResponse {
         $this->authorize('cancel', $booking);
-        $booking = $this->bookingService->cancelBooking($booking);
+
+        try {
+            $booking = $this->bookingService->cancelBooking($booking);
+        } catch (BookingException $e) {
+            return $this->error($e->getMessage(), $e->statusCode());
+        }
 
         return $this->success('Booking berhasil dibatalkan.', new BookingResource($booking));
     }

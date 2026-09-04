@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -49,5 +50,31 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Data yang kamu cari tidak ditemukan.',
                 ], 404);
             }
+        });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            if ($e instanceof HttpExceptionInterface) {
+                return response()->json([
+                    'message' => $e->getMessage() ?: 'Request tidak dapat diproses.',
+                ], $e->getStatusCode());
+            }
+
+            if (config('app.debug')) {
+                return response()->json([
+                    'message'   => $e->getMessage() ?: 'Terjadi kesalahan pada server.',
+                    'exception' => get_class($e),
+                    'file'      => $e->getFile(),
+                    'line'      => $e->getLine(),
+                    'trace'     => collect($e->getTrace())->take(15)->toArray(),
+                ], 500);
+            }
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.',
+            ], 500);
         });
     })->create();
