@@ -11,7 +11,7 @@ Poptix adalah sistem manajemen bioskop dan E-Ticketing (pemesanan tiket) yang di
 ## 🛠 Tech Stack & Dependencies
 
 *   **Framework Core:** Laravel 12.x (PHP 8.3+)
-*   **Database Relasional:** MySQL / MariaDB via Eloquent ORM
+*   **Database Relasional:** PostgreSQL / Supabase
 *   **Authentication API:** Laravel Sanctum (Token-Based) & Laravel Breeze (Web Guard)
 *   **Authorization (RBAC):** Spatie Laravel Permission (Role: `admin` & `user`)
 *   **Payment Gateway Service:** Integrasi Webhook via **Midtrans Snap** 
