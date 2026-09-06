@@ -48,9 +48,21 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        $hasActiveBookings = $user->bookings()->whereIn('status', ['pending', 'paid'])->exists();
+        if ($hasActiveBookings) {
+            return Redirect::back()->withErrors([
+                'password' => 'Tidak bisa menghapus akun karena kamu masih memiliki booking aktif (Pending/Paid).',
+            ], 'userDeletion');
+        }
 
-        $user->delete();
+        try {
+            $user->delete();
+            Auth::logout();
+        } catch (\Exception $e) {
+            return Redirect::back()->withErrors([
+                'password' => 'Terjadi kesalahan sistem saat menghapus akun.',
+            ], 'userDeletion');
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

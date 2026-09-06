@@ -18,6 +18,10 @@ class BookingException extends RuntimeException
         return $this->statusCode;
     }
 
+    public static function scheduleAlreadyStarted(): self {
+        return new self('Jadwal ini sudah dimulai, tidak bisa dibooking.', 422);
+    }
+
     public static function seatInvalid(): self {
         return new self('Kursi yang dipilih tidak valid atau sudah dibooking.', 422);
     }

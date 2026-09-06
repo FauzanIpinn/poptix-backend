@@ -50,6 +50,14 @@ class BookingController extends Controller
         return view('bookings.show', compact('booking'));
     }
 
+    public function print(Booking $booking): View {
+        $this->authorize('view', $booking);
+
+        $booking->load(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat', 'user']);
+
+        return view('bookings.print', compact('booking'));
+    }
+
     public function myBookings(): View {
         $bookings = Booking::where('user_id', auth()->id())
             ->with(['schedule.movie', 'schedule.studio.cinema', 'bookingSeats.seat'])

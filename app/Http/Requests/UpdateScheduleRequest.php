@@ -49,7 +49,10 @@ class UpdateScheduleRequest extends FormRequest
             $overlapping = Schedule::with('movie')
                 ->where('studio_id', $this->studio_id)
                 ->where('id', '!=', $currentScheduleId)
-                ->whereDate('show_date', $newStart->toDateString())
+                ->whereBetween('show_date', [
+                    $newStart->copy()->subDay()->toDateString(), 
+                    $newStart->copy()->addDay()->toDateString()
+                ])
                 ->get()
                 ->contains(function (Schedule $schedule) use ($newStart, $newEnd) {
                     $existingStart = Carbon::parse($schedule->show_date->format('Y-m-d') . ' ' . $schedule->show_time);

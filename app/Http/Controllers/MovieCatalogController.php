@@ -10,7 +10,9 @@ class MovieCatalogController extends Controller
 {
     public function index(Request $request): View
     {
-        $status = $request->get('status', 'now_showing');
+        $status = in_array($request->get('status'), ['now_showing', 'coming_soon'], true)
+            ? $request->get('status')
+            : 'now_showing';
 
         // Gunakan scope yang sudah didefinisikan di model
         $movies = Movie::when(
@@ -20,9 +22,9 @@ class MovieCatalogController extends Controller
         )
         ->with(['schedules.cinema'])   // eager load untuk mencegah N+1
         ->latest()
-        ->get();
+        ->paginate(12);
 
-        return view('user.catalog', [
+        return view('movies.index', [
             'movies' => $movies,
             'status' => $status,
         ]);

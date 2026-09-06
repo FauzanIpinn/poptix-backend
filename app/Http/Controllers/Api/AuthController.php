@@ -11,6 +11,8 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -20,7 +22,7 @@ class AuthController extends Controller
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
         ]);
 
         $user->assignRole('user');
@@ -34,11 +36,21 @@ class AuthController extends Controller
     }
 
     public function login(StoreLoginRequest $request): JsonResponse {
+        $throttleKey = Str::transliterate(Str::lower($request->email).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return $this->error('Terlalu banyak percobaan login. Silakan coba lagi dalam ' . $seconds . ' detik.', 429);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey);
             return $this->error('Email atau password salah.', 401);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $token = $user->createToken('api-token')->plainTextToken;
 

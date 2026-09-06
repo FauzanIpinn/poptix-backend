@@ -44,6 +44,7 @@ class MovieController extends Controller
         $validated = $request->validated();
 
         if ($request->hasFile('poster')) {
+            $this->deletePoster($movie->poster);
             $validated['poster'] = $this->uploadPoster($request->file('poster'));
         }
 
@@ -56,6 +57,7 @@ class MovieController extends Controller
     {
         $this->authorize('delete', $movie);
 
+        $this->deletePoster($movie->poster);
         $movie->delete();
 
         return $this->success('Film berhasil dihapus.');

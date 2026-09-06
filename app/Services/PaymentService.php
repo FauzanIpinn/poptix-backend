@@ -68,6 +68,15 @@ class PaymentService
                 return $booking;
             }
 
+            if (in_array($booking->status, ['expired', 'cancelled'], true)) {
+                Log::warning('Midtrans notification: booking sudah tidak aktif.', [
+                    'order_id' => $orderId,
+                    'booking_id' => $booking->id,
+                    'status' => $booking->status,
+                ]);
+                throw new PaymentException("Booking sudah {$booking->status}, pembayaran tidak dapat diproses.", 409);
+            }
+
             if (abs(((float) $grossAmount) - (float) $booking->total_price) > 0.01) {
                 Log::critical('Midtrans notification: nominal tidak cocok, kemungkinan payload dimanipulasi.', [
                     'order_id' => $orderId,

@@ -19,7 +19,7 @@ class StoreScheduleRequest extends FormRequest
             'studio_id' => ['required', 'exists:studios,id'],
             'show_date' => ['required', 'date', 'after_or_equal:today'],
             'show_time' => ['required', 'date_format:H:i'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['required', 'numeric', 'min:0', 'max:10000000', 'decimal:0,2'],
         ];
     }
 
@@ -46,7 +46,10 @@ class StoreScheduleRequest extends FormRequest
 
             $overlapping = Schedule::with('movie')
                 ->where('studio_id', $this->studio_id)
-                ->whereDate('show_date', $newStart->toDateString())
+                ->whereBetween('show_date', [
+                    $newStart->copy()->subDay()->toDateString(), 
+                    $newStart->copy()->addDay()->toDateString()
+                ])
                 ->get()
                 ->contains(function (Schedule $schedule) use ($newStart, $newEnd) {
                     $existingStart = Carbon::parse($schedule->show_date->format('Y-m-d') . ' ' . $schedule->show_time);

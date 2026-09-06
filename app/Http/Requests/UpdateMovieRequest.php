@@ -25,7 +25,7 @@ class UpdateMovieRequest extends FormRequest {
             'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'synopsis' => ['required', 'string'],
             'genre' => ['required', 'string', 'max:100'],
-            'duration' => ['required', 'integer', 'min:1'],
+            'duration' => ['required', 'integer', 'min:1', 'max:600'],
             'rating' => ['nullable', 'string', 'max:10'],
             'trailer' => ['nullable', 'url'],
             'status' => ['required', 'in:now_showing,coming_soon'],

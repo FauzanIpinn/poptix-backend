@@ -35,9 +35,14 @@ class MovieController extends Controller
             ->with('success', 'Film berhasil ditambahkan.');
     }
 
+    public function edit(Movie $movie): View {
+        return view('admin.movies.edit', compact('movie'));
+    }
+
     public function update(UpdateMovieRequest $request, Movie $movie): RedirectResponse {
         $validated = $request->validated();
         if ($request->hasFile('poster')) {
+            $this->deletePoster($movie->poster);
             $validated['poster'] = $this->uploadPoster($request->file('poster'));
         }
 
@@ -48,8 +53,9 @@ class MovieController extends Controller
     }
 
     public function destroy(Movie $movie): RedirectResponse {
-    $this->authorize('delete', $movie);
-    
+        $this->authorize('delete', $movie);
+        
+        $this->deletePoster($movie->poster);
         $movie->delete();
         
         return redirect()

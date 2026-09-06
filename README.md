@@ -1,58 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 </p>
 
-## About Laravel
+# Poptix 🍿 — Cinema Ticketing System
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Poptix adalah sistem manajemen bioskop dan E-Ticketing (pemesanan tiket) yang dibangun menggunakan kerangka kerja (framework) **Laravel 12.x**. Backend project ini dirancang dengan mengedepankan performa optimal, ketahanan transaksi tingkat tinggi _(race-condition safe)_, efisiensi skalabilitas _(caching mechanism)_, serta arsitektur _API-First_ yang siap dipasangkan dengan platform Mobile maupun Web-app (React/Vue/Angular).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠 Tech Stack & Dependencies
 
-## Learning Laravel
+*   **Framework Core:** Laravel 12.x (PHP 8.3+)
+*   **Database Relasional:** MySQL / MariaDB via Eloquent ORM
+*   **Authentication API:** Laravel Sanctum (Token-Based) & Laravel Breeze (Web Guard)
+*   **Authorization (RBAC):** Spatie Laravel Permission (Role: `admin` & `user`)
+*   **Payment Gateway Service:** Integrasi Webhook via **Midtrans Snap** 
+*   **Asset Storage:** Cloudinary Cloud Storage (via `cloudinary-laravel`)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🏗 Arsitektur & Pola Desain (Design Patterns)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Proyek ini telah direfaktor agar menjauhi teknik kode "*Fat Controller*". Proses bisnis kritikal dilimpahkan menuju infrastruktur yang termodularisasi secara independen:
 
-## Agentic Development
+1.  **Service Pattern (Separation of Concern)**
+    Pemisahan logic aplikasi yang rumit ke dalam class entitas Service:
+    *   `BookingService`: Menangani alur verifikasi ketersediaan dan booking.
+    *   `PaymentService`: Integrasi mutasi, validasi *signature_key* JSON Midtrans, & kalkulasi nominal webhook notifikasi.
+2.  **Concurrency / Race-Condition Safe 🔒**
+    Poptix melindungi bentrokan saat jutaan user memilih tempat duduk bioskop kebanggaan mereka pada waktu bersamaan dalam satu milidetik, menggunakan:
+    *   Database transaction logic (`DB::transaction`).
+    *   Pessimistic Locking Query Trait (`lockForUpdate()`) selama _cycle_ booking berlangsung.
+3.  **Idempotency Rest API Protection**
+    Endpoint Store Booking dirancang **idempoten**. Poptix menghentikan duplikasi _multiple-charge/double-booking_ bilamana koneksi internet klien terputus dan API menerima spam retry HTTP request berkali-kali. Poptix "mengingat" setiap eksekusi dengan `idempotency_key` (TTL config base).
+4.  **Optimized Caching Response Performance**
+    Query _Lookup_ Jadwal ketersediaan kursi tidak ditodong paksa ke database secara simultan yang dapat memberatkan CPU/RAM database server. Kapasitas ditampung di Redis/Memory Cache ber-TTL dengan masa kadaluarsa 10 detik (status active pending ticket) hingga 6 Jam lamanya (limitasi status kapasitas total bangku dari model Studio `seats-count`).
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
+
+## 🗄️ Relational Database Flow
+
+Hierarki alur sistem berjenjang dengan *Foreign Key Constraints* (cascade destroy logic).
+
+*   **Master Bioskop:** `Cinema` ➔ `Studio` ➔ Memiliki `Seat` (kapasitas generate A-Z)
+*   **Master Tayangan:** `Movie` ➔ `Schedule`
+*   **Transaksi:** `User` memesan `Schedule` ➔ Melahirkan `Booking` ➔ Mengunci `BookingSeat` ➔ *(Trigger Expiration Cron job)* ➔ *(Midtrans Webhook Call)* ➔ Issued as Paid E-Ticket `checked_in_at`.
+
+---
+
+## 🔒 Security & Backend Features
+*   **Guarded Mass Assignment:** Proteksi ketat pengalokasian Request injection ke dalam Database. Setiap Model menggunakan deklarasi perlindungan property array `$fillable` yang eksplisit tanpa menggunakan fallback *guarded*.
+*   **Layered Authentication Endpoint:** Pengecekan authorization `abort_if()`, *Gates Policies*, dan blokade Middleware `[auth, role:admin]` diberlakukan berlapis di API Routes maupun Web Routes khususnya di zona rentan seperti Dashboard Ticket Scanner & *Verification/Check-In* tiket yang wajib bersifat tertutup non-publik.
+*   **Rate Limiting & Anti-Bruteforce:** Penutupan lubang bot-spam di form Login/Registrasi API dibungkus oleh Manual Throttler Limit Trait dan Transliterasi kunci IP + Alamat Email (menahan akses bila melampaui toleransi limit failed attempts, eg: *Max 5 / Menit*).
+*   **Smart Remote Storage Garbage Collector 🧹 :** Integrasi pembersihan _orphan files_ / remah-remah gambar usang pada remote resource bucket Cloudinary (menghindari memory-leak dari Bucket Storage tagihan Cloud Provider) setiap kali admin menghapus film atau memperbaharui poster.
+*   **No Wildcards Exploit:** Sanititasi kueri dari celah eksploitasi penulisan sintaks string berkarakter spesifik (% / _) sebelum diteruskan pada operasi _LIKE wildcard search query_ API Endpoint.
+
+---
+
+## 📡 API Endpoints (v1) Terstruktur Cepat
+
+Poptix mengekspos endpoint API (`routes/api.php`) beralaskan rute sub-domain `/api/v1/*`. Response JSON dimodelkan dan distandardisasi rapi melalui **Eloquent HTTP Resources** & **JsonTraits**, sehingga mengeleminasi data-data rahasia seperti _timestamp server_ agar tidak bocor di Production environment. Memiliki dokumentasi endpoint mandiri via Postman (opsional test suit). 
+
+---
+
+## 🚀 Instalasi Sistem Secara Lokal (How to Run)
+
+Bagi Developer lain yang ingin berkontribusi, jalankan script setup pada terminal environment:
 
 ```bash
-composer require laravel/boost --dev
+# 1. Setup composer & npm dependencies:
+composer setup
 
-php artisan boost:install
+# 2. Lingkungan File Environment 
+# Edit kredensial kunci file .env buatan composer yang muncul:
+# -- Set konfigurasi Database kredensial (MySQL/DB_*)
+# -- Set CLOUDINARY_URL (kunci bucket file)
+# -- Set MIDTRANS_SERVER_KEY & MIDTRANS_CLIENT_KEY
+
+# 3. Running Server Web Development (Termasuk asset JS/Vite bundling)
+composer dev
+
+# 4. Atau jika perintah spesifik dibutuhkan per instance (Optional):
+php artisan serve
+npm run dev
+
+# 5. Jalankan command scheduler di terminal terpisah secara berkala 
+# untuk fitur pembatalan otomatis tiket hangus (Unpaid/Expire Queue).
+php artisan schedule:work
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+*Dikembangkan oleh tim engineering di Google Deepmind berbasis Standard Operational Procedure Enterprise Code Base Analytics.*

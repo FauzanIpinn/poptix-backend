@@ -1,47 +1,54 @@
-<x-app-layout>
-    <x-slot name="header">
-        Edit Jadwal Film
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <x-admin.card>
-                <form action="{{ route('admin.schedules.update', $schedule) }}" method="POST" class="space-y-5">
-                    @csrf
-                    @method('PUT')
+@section('header', 'Edit Bioskop')
 
-                    <x-admin.select name="movie_id" label="Film" required>
-                        @foreach ($movies as $movie)
-                            <option value="{{ $movie->id }}" @selected(old('movie_id', $schedule->movie_id) == $movie->id)>
-                                {{ $movie->title }}
-                            </option>
-                        @endforeach
-                    </x-admin.select>
-
-                    <x-admin.select name="studio_id" label="Studio" required>
-                        @foreach ($studios as $studio)
-                            <option value="{{ $studio->id }}" @selected(old('studio_id', $schedule->studio_id) == $studio->id)>
-                                {{ $studio->cinema->name }} - {{ $studio->name }}
-                            </option>
-                        @endforeach
-                    </x-admin.select>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <x-admin.input type="date" name="show_date" label="Tanggal Tayang" required
-                            :value="$schedule->show_date->format('Y-m-d')" />
-                        <x-admin.input type="time" name="show_time" label="Jam Tayang" required
-                            :value="\Illuminate\Support\Carbon::parse($schedule->show_time)->format('H:i')" />
-                    </div>
-
-                    <x-admin.input type="number" name="price" label="Harga Tiket (Rp)" required min="0" step="1000"
-                        :value="$schedule->price" />
-
-                    <div class="flex gap-2 pt-2">
-                        <x-admin.button type="submit">Update Jadwal</x-admin.button>
-                        <x-admin.button variant="secondary" href="{{ route('admin.schedules.index') }}">Batal</x-admin.button>
-                    </div>
-                </form>
-            </x-admin.card>
+@section('content')
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-white">Edit Data Bioskop</h2>
+            <p class="text-ticketor-gray text-sm mt-1">Perbarui informasi bioskop {{ $cinema->name }}.</p>
         </div>
+        <a href="{{ route('admin.cinemas.index') }}" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-700 transition">
+            Batal
+        </a>
     </div>
-</x-app-layout>
+
+    <form action="{{ route('admin.cinemas.update', $cinema) }}" method="POST" class="bg-ticketor-card p-6 rounded-xl border border-gray-800 space-y-5">
+        @csrf
+        @method('PUT')
+
+        <div>
+            <label for="name" class="block text-sm font-medium text-ticketor-gray mb-2">Nama Bioskop</label>
+            <input type="text" name="name" id="name" value="{{ old('name', $cinema->name) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+            @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
+
+        <div>
+            <label for="brand" class="block text-sm font-medium text-ticketor-gray mb-2">Brand</label>
+            <select name="brand" id="brand" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                <option value="XXI" {{ old('brand', $cinema->brand) === 'XXI' ? 'selected' : '' }}>XXI</option>
+                <option value="CGV" {{ old('brand', $cinema->brand) === 'CGV' ? 'selected' : '' }}>CGV</option>
+                <option value="Cinepolis" {{ old('brand', $cinema->brand) === 'Cinepolis' ? 'selected' : '' }}>Cinepolis</option>
+            </select>
+            @error('brand') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
+
+        <div>
+            <label for="city" class="block text-sm font-medium text-ticketor-gray mb-2">Kota</label>
+            <input type="text" name="city" id="city" value="{{ old('city', $cinema->city) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+            @error('city') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
+
+        <div>
+            <label for="address" class="block text-sm font-medium text-ticketor-gray mb-2">Alamat Lengkap</label>
+            <textarea name="address" id="address" rows="3" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">{{ old('address', $cinema->address) }}</textarea>
+            @error('address') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+        </div>
+
+        <button type="submit" class="w-full bg-ticketor-neon text-black font-bold py-3.5 rounded-xl hover:bg-yellow-400 transition shadow-lg shadow-ticketor-neon/10 mt-4">
+            Perbarui Bioskop
+        </button>
+    </form>
+</div>
+@endsection

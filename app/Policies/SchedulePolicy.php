@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Schedule;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class SchedulePolicy
 {
@@ -19,17 +20,33 @@ class SchedulePolicy
         return $user->hasRole('admin');
     }
 
-    public function update(User $user, Schedule $schedule): bool {
-        return $user->hasRole('admin');
+    public function update(User $user, Schedule $schedule): Response {
+        if (! $user->hasRole('admin')) {
+            return Response::deny('Kamu tidak punya izin untuk mengubah jadwal.');
+        }
+
+        if ($this->hasActiveBookings($schedule)) {
+            return Response::deny('Jadwal ini masih punya booking aktif (pending/paid), tidak bisa diubah. Batalkan/selesaikan booking terkait terlebih dahulu.');
+        }
+
+        return Response::allow();
     }
 
-    public function delete(User $user, Schedule $schedule): bool {
+    public function delete(User $user, Schedule $schedule): Response {
         if (! $user->hasRole('admin')) {
-            return false;
+            return Response::deny('Kamu tidak punya izin untuk menghapus jadwal.');
         }
-        $hasActiveBookings = $schedule->bookings()
+
+        if ($this->hasActiveBookings($schedule)) {
+            return Response::deny('Jadwal ini masih punya booking aktif (pending/paid), tidak bisa dihapus.');
+        }
+
+        return Response::allow();
+    }
+
+    private function hasActiveBookings(Schedule $schedule): bool {
+        return $schedule->bookings()
             ->whereIn('status', ['pending', 'paid'])
             ->exists();
-        return ! $hasActiveBookings;
     }
 }

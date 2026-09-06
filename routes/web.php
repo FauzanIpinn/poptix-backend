@@ -8,8 +8,19 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BookingController;            
 use App\Http\Controllers\MovieCatalogController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TicketVerificationController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+// Verifikasi E-Ticket (Hanya Admin)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/tickets/verify/{booking_code}', [TicketVerificationController::class, 'verify'])->name('tickets.verify');
+    Route::post('/tickets/verify/{booking_code}/checkin', [TicketVerificationController::class, 'checkIn'])->name('tickets.checkin');
+});
 
 Route::get('/dashboard', function () {
     if (auth()->user()->hasRole('admin')) {
@@ -42,6 +53,7 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.index');
+    Route::get('/bookings/{booking}/print', [BookingController::class, 'print'])->name('bookings.print');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/{booking}/checkout', [PaymentController::class, 'checkout'])->name('bookings.checkout');
 });

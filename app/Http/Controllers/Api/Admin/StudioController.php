@@ -27,7 +27,8 @@ class StudioController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         $this->applySort($query, $request, ['name', 'created_at'], '-created_at');

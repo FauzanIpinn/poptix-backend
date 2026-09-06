@@ -33,15 +33,37 @@
                 </div>
                 <div>
                     <label for="duration" class="block text-sm font-medium text-ticketor-gray mb-2">Durasi (Menit)</label>
-                    <input type="number" name="duration" id="duration" value="{{ old('duration', $movie->duration) }}" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                    <input type="number" name="duration" id="duration" value="{{ old('duration', $movie->duration) }}" required min="1" max="600" class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
                     @error('duration') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="status" class="block text-sm font-medium text-ticketor-gray mb-2">Status Tayang</label>
+                    <select name="status" id="status" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                        <option value="now_showing" {{ old('status', $movie->status) === 'now_showing' ? 'selected' : '' }}>Sedang Tayang (Now Showing)</option>
+                        <option value="coming_soon" {{ old('status', $movie->status) === 'coming_soon' ? 'selected' : '' }}>Segera Tayang (Coming Soon)</option>
+                    </select>
+                    @error('status') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label for="rating" class="block text-sm font-medium text-ticketor-gray mb-2">Rating Usia (Opsional)</label>
+                    <input type="text" name="rating" id="rating" value="{{ old('rating', $movie->rating) }}" placeholder="SU, 13+, 17+, 21+" class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                    @error('rating') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
             <div>
-                <label for="description" class="block text-sm font-medium text-ticketor-gray mb-2">Sinopsis Film</label>
-                <textarea name="description" id="description" rows="5" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">{{ old('description', $movie->description) }}</textarea>
-                @error('description') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                <label for="trailer" class="block text-sm font-medium text-ticketor-gray mb-2">Link Trailer URL (Opsional)</label>
+                <input type="url" name="trailer" id="trailer" value="{{ old('trailer', $movie->trailer) }}" placeholder="https://youtube.com/watch?v=..." class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">
+                @error('trailer') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <label for="synopsis" class="block text-sm font-medium text-ticketor-gray mb-2">Sinopsis Film</label>
+                <textarea name="synopsis" id="synopsis" rows="5" required class="w-full bg-ticketor-dark border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ticketor-neon transition">{{ old('synopsis', $movie->synopsis) }}</textarea>
+                @error('synopsis') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
             </div>
         </div>
 
@@ -51,7 +73,7 @@
                 
                 @if($movie->poster)
                     <div class="mb-4 rounded-lg overflow-hidden border border-gray-800">
-                        <img src="{{ asset('storage/' . $movie->poster) }}" alt="{{ $movie->title }}" class="w-full h-64 object-cover">
+                        <img src="{{ Str::startsWith($movie->poster, 'http') ? $movie->poster : asset('storage/' . $movie->poster) }}" alt="{{ $movie->title }}" class="w-full h-64 object-cover">
                     </div>
                 @endif
 

@@ -14,7 +14,7 @@ class StudioFactory extends Factory
     public function definition(): array {
         return [
             'cinema_id' => Cinema::factory(),
-            'name' => 'Studio ' . $this->faker->unique()->numberBetween(1, 20),
+            'name' => 'Studio ' . $this->faker->unique()->numberBetween(2, 9999),
         ];
     }
 }

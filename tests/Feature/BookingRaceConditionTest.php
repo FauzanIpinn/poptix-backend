@@ -36,12 +36,12 @@ class BookingRaceConditionTest extends TestCase
         $userB = User::factory()->create();
         $userB->assignRole('user');
 
-        $this->actingAs($userA, 'sanctum')->postJson('/api/bookings', [
+        $this->actingAs($userA, 'sanctum')->postJson('/api/v1/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$seat->id],
         ])->assertStatus(201);
 
-        $this->actingAs($userB, 'sanctum')->postJson('/api/bookings', [
+        $this->actingAs($userB, 'sanctum')->postJson('/api/v1/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$seat->id],
         ])->assertStatus(409);
@@ -56,7 +56,7 @@ class BookingRaceConditionTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('user');
 
-        $first = $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
+        $first = $this->actingAs($user, 'sanctum')->postJson('/api/v1/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$seat->id],
         ])->assertStatus(201);
@@ -64,10 +64,10 @@ class BookingRaceConditionTest extends TestCase
         $bookingId = $first->json('data.id');
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson("/api/bookings/{$bookingId}/cancel")
+            ->patchJson("/api/v1/bookings/{$bookingId}/cancel")
             ->assertStatus(200);
 
-        $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$seat->id],
         ])->assertStatus(201);
@@ -86,8 +86,8 @@ class BookingRaceConditionTest extends TestCase
             'idempotency_key' => 'test-key-123',
         ];
 
-        $this->actingAs($user, 'sanctum')->postJson('/api/bookings', $payload)->assertStatus(201);
-        $this->actingAs($user, 'sanctum')->postJson('/api/bookings', $payload)->assertStatus(201);
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/bookings', $payload)->assertStatus(201);
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/bookings', $payload)->assertStatus(201);
 
         $this->assertDatabaseCount('bookings', 1);
     }
@@ -101,7 +101,7 @@ class BookingRaceConditionTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('user');
 
-        $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/bookings', [
             'schedule_id' => $schedule->id,
             'seat_ids' => [$foreignSeat->id],
         ])->assertStatus(422)

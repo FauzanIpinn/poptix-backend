@@ -21,7 +21,7 @@ class DashboardController extends Controller
             ->where('status', 'paid')
             ->sum('total_price');
 
-        $activeMovies = Movie::count();
+        $activeMovies = Movie::nowShowing()->count();
 
         $recentBookings = Booking::with(['user', 'schedule.movie'])
             ->latest()

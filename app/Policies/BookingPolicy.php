@@ -8,7 +8,7 @@ use App\Models\User;
 class BookingPolicy
 {
     public function viewAny(User $user): bool {
-        return $user->hasRole('user');
+        return $user->hasRole('user') || $user->hasRole('admin');
     }
 
     public function view(User $user, Booking $booking): bool {

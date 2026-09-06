@@ -25,7 +25,7 @@ class Cinema extends Model
     }
 
     public function schedules(): HasMany {
-        return $this->HasMany(Schedule::class);
+        return $this->hasMany(Schedule::class);
     }
 
     public function studios(): HasMany {

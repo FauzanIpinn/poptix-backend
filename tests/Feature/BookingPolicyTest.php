@@ -31,11 +31,11 @@ class BookingPolicyTest extends TestCase
         ]);
 
         $this->actingAs($stranger, 'sanctum')
-            ->getJson("/api/bookings/{$booking->id}")
+            ->getJson("/api/v1/bookings/{$booking->id}")
             ->assertStatus(403);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/bookings/{$booking->id}")
+            ->getJson("/api/v1/bookings/{$booking->id}")
             ->assertStatus(200);
     }
 
@@ -55,7 +55,7 @@ class BookingPolicyTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson("/api/bookings/{$booking->id}/cancel")
+            ->patchJson("/api/v1/bookings/{$booking->id}/cancel")
             ->assertStatus(403);
     }
 }

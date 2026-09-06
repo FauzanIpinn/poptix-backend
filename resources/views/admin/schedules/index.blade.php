@@ -38,16 +38,17 @@
                     <td class="py-4 px-6 font-semibold">{{ $schedule->movie->title }}</td>
                     <td class="py-4 px-6">
                         <span class="bg-gray-800 text-ticketor-neon border border-gray-700 px-2.5 py-1 rounded-md text-xs font-semibold">
-                            {{ $schedule->cinema->name }}
+                            {{ $schedule->studio->name ?? '-' }} · {{ $schedule->cinema->name ?? '-' }}
                         </span>
                     </td>
                     <td class="py-4 px-6">
-                        {{ \Carbon\Carbon::parse($schedule->start_time)->format('d M Y - H:i') }} WIB
+                        {{ $schedule->show_date->format('d M Y') }} - {{ \Illuminate\Support\Carbon::parse($schedule->show_time)->format('H:i') }} WIB
                     </td>
                     <td class="py-4 px-6 font-medium text-ticketor-neon">
                         Rp {{ number_format($schedule->price, 0, ',', '.') }}
                     </td>
                     <td class="py-4 px-6 text-right space-x-2">
+                        <a href="{{ route('admin.schedules.edit', $schedule) }}" class="text-ticketor-neon hover:text-yellow-400 transition">Edit</a>
                         <form action="{{ route('admin.schedules.destroy', $schedule) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus jadwal ini?');">
                             @csrf
                             @method('DELETE')
@@ -65,5 +66,11 @@
             </tbody>
         </table>
     </div>
+
+    @if($schedules->hasPages())
+    <div class="p-4 border-t border-gray-800">
+        {{ $schedules->links() }}
+    </div>
+    @endif
 </div>
 @endsection

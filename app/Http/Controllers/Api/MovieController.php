@@ -22,7 +22,8 @@ class MovieController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $query->where('title', 'like', '%' . $search . '%');
         }
 
         $movies = $query->latest()->paginate(10);

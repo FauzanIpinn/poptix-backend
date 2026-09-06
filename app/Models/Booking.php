@@ -11,26 +11,27 @@ use Illuminate\Support\Str;
 class Booking extends Model
 {
     use HasFactory;
-
+    
     protected $fillable = [
-        'booking_code',
         'user_id',
         'schedule_id',
         'total_price',
         'status',
         'expires_at',
         'snap_token',
-        'payment_type',
         'midtrans_order_id',
+        'payment_type',
         'paid_at',
+        'checked_in_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'total_price' => 'decimal:2',
-            'expires_at'  => 'datetime',
-            'paid_at'     => 'datetime',
+            'total_price'   => 'decimal:2',
+            'expires_at'    => 'datetime',
+            'paid_at'       => 'datetime',
+            'checked_in_at' => 'datetime',
         ];
     }
 
@@ -44,9 +45,13 @@ class Booking extends Model
 
     public static function generateBookingCode(): string
     {
+        $code = '';
+        $retries = 0;
+
         do {
             $code = 'PPX-' . strtoupper(Str::random(6));
-        } while (static::where('booking_code', $code)->exists());
+            $retries++;
+        } while ($retries < 5 && static::where('booking_code', $code)->exists());
 
         return $code;
     }
